@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #fcf9f8;
+  --color-on-surface: #1c1b1b;
+  --color-on-surface-variant: #47473f;
+  --color-primary: #5e604d;
+  --color-primary-container: #f5f5dc;
+  --color-surface-container: #f0eded;
+  --color-surface-container-high: #eae7e7;
+  --color-outline-variant: #c8c7bc;
+  --color-on-primary: #ffffff;
+  --color-owner-badge: #8b5e3c;
+  --color-status-success: #059669;
+  --color-status-success-bg: #ecfdf5;
+  --color-status-warning: #d97706;
+  --color-status-warning-bg: #fffbeb;
+  --color-border-subtle: #e5e7eb;
+  --font-sans: var(--font-inter);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.glass-panel {
+  background: rgba(252, 249, 248, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(28, 27, 27, 0.1);
+}
+
+.glass-card {
+  background: rgba(245, 245, 220, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(28, 27, 27, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
+}
+
+.hero-bg {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(242, 224, 203, 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(228, 228, 204, 0.4) 0%, transparent 40%);
+}
+
+.admin-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
