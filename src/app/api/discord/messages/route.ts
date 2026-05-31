@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { discordBotHeaders } from "@/lib/discord/api-headers";
 import { scheduleDiscordChatPurge } from "@/lib/discord/chat-retention";
 
 type DiscordApiMessage = {
@@ -50,8 +51,8 @@ function normalizeDiscordContent(message: DiscordApiMessage) {
 
 export async function GET() {
   try {
-    const token = process.env.DISCORD_BOT_TOKEN;
-    const channelId = process.env.NEXT_PUBLIC_DISCORD_CHANNEL_ID;
+    const token = process.env.DISCORD_BOT_TOKEN?.trim();
+    const channelId = process.env.NEXT_PUBLIC_DISCORD_CHANNEL_ID?.trim();
 
     if (!token || !channelId) {
       return NextResponse.json([], { status: 200 });
@@ -61,11 +62,15 @@ export async function GET() {
 
     const discordUrl = `https://discord.com/api/v10/channels/${channelId}/messages?limit=${LATEST_LIMIT}`;
     const response = await fetch(discordUrl, {
-      headers: { Authorization: `Bot ${token}` },
+      headers: discordBotHeaders(token),
       cache: "no-store",
     });
 
     if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.warn(
+        `[discord-messages] ${response.status} ${response.statusText}: ${body.slice(0, 200)}`,
+      );
       return NextResponse.json([], { status: 200 });
     }
 
