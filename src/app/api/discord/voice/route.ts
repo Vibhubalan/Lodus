@@ -78,19 +78,26 @@ async function fetchGuildChannels(
   return cachedGuildChannels;
 }
 
+function emptyVoice(stage: string) {
+  return NextResponse.json([], {
+    status: 200,
+    headers: { "X-Lodus-Voice-Stage": stage },
+  });
+}
+
 export async function GET() {
   try {
     const botToken = process.env.DISCORD_BOT_TOKEN?.trim();
     if (!botToken) {
-      return NextResponse.json([], { status: 200 });
+      return emptyVoice("no-bot-token");
     }
 
     const guildId = await resolveDiscordGuildId(botToken);
     if (!guildId) {
       console.warn(
-        "[discord-voice-route] Missing guild id — set DISCORD_GUILD_ID on Vercel or ensure chat channel id is valid.",
+        "[discord-voice-route] Missing guild id — set DISCORD_CHANNEL_ID / NEXT_PUBLIC_DISCORD_CHANNEL_ID on Vercel.",
       );
-      return NextResponse.json([], { status: 200 });
+      return emptyVoice("no-guild-id");
     }
 
     const joinUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL?.trim() || null;
@@ -133,10 +140,7 @@ export async function GET() {
           headers: { "X-Voice-Tracker-Ready": trackerReadyForHeader ? "1" : "0" },
         });
       }
-      return NextResponse.json([], {
-        status: 200,
-        headers: { "X-Voice-Tracker-Ready": "0" },
-      });
+      return emptyVoice("no-guild-channels");
     }
 
     const voiceChannels = guildChannels
@@ -176,10 +180,13 @@ export async function GET() {
 
     return NextResponse.json(mapped, {
       status: 200,
-      headers: { "X-Voice-Tracker-Ready": trackerReadyForHeader ? "1" : "0" },
+      headers: {
+        "X-Lodus-Voice-Stage": "ok",
+        "X-Voice-Tracker-Ready": trackerReadyForHeader ? "1" : "0",
+      },
     });
   } catch (error) {
     console.warn("[discord-voice-route] Unexpected route failure:", error);
-    return NextResponse.json([], { status: 200 });
+    return emptyVoice("error");
   }
 }

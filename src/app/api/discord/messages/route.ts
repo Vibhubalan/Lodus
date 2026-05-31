@@ -52,7 +52,10 @@ function normalizeDiscordContent(message: DiscordApiMessage) {
 export async function GET() {
   try {
     const token = process.env.DISCORD_BOT_TOKEN?.trim();
-    const channelId = process.env.NEXT_PUBLIC_DISCORD_CHANNEL_ID?.trim();
+    const channelId = (
+      process.env.DISCORD_CHANNEL_ID?.trim() ??
+      process.env.NEXT_PUBLIC_DISCORD_CHANNEL_ID?.trim()
+    );
 
     if (!token || !channelId) {
       return NextResponse.json([], { status: 200 });
