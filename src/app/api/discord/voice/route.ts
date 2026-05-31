@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { discordBotHeaders } from "@/lib/discord/api-headers";
+import { discordBotHeaders, resolveDiscordGuildId } from "@/lib/discord/api-headers";
 import { readVoiceCache } from "@/lib/discord/voice-cache";
 import { shouldStartEmbeddedDiscordBot } from "@/lib/discord/worker-mode";
 import {
@@ -80,9 +80,16 @@ async function fetchGuildChannels(
 
 export async function GET() {
   try {
-    const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID?.trim();
     const botToken = process.env.DISCORD_BOT_TOKEN?.trim();
-    if (!guildId || !botToken) {
+    if (!botToken) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    const guildId = await resolveDiscordGuildId(botToken);
+    if (!guildId) {
+      console.warn(
+        "[discord-voice-route] Missing guild id — set DISCORD_GUILD_ID on Vercel or ensure chat channel id is valid.",
+      );
       return NextResponse.json([], { status: 200 });
     }
 
