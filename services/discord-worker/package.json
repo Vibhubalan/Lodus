@@ -1,0 +1,12 @@
+{
+  "name": "lodus-discord-worker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "discord.js": "^14.26.4"
+  }
+}

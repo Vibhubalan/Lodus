@@ -1,33 +1,42 @@
-import { MemberAvatar } from "@/components/members/MemberAvatar";
-import { RoleBadge } from "@/components/members/RoleBadge";
-import type { Member } from "@/lib/db/schema";
+"use client";
 
-export function LeadershipGrid({ leaders }: { leaders: Member[] }) {
+import { HomeDeckPreview } from "@/components/home/HomeDeckPreview";
+import { ScrollReveal } from "@/components/layout/ScrollReveal";
+import type { RosterMember, RosterViewerMode } from "@/lib/members/roster-types";
+
+export function LeadershipGrid({
+  leaders,
+  viewerMode = "public",
+  title = "Leadership",
+  subtitle = "Owners & admins",
+  overlayTitle = "All Leadership",
+  canEditRoster = false,
+  canDeleteMembers = false,
+}: {
+  leaders: RosterMember[];
+  viewerMode?: RosterViewerMode;
+  title?: string;
+  subtitle?: string;
+  overlayTitle?: string;
+  canEditRoster?: boolean;
+  canDeleteMembers?: boolean;
+}) {
+  if (leaders.length === 0) return null;
+
   return (
-    <section id="leadership" className="scroll-mt-24 pt-16">
-      <div className="mb-8">
-        <h2 className="text-2xl font-medium text-on-surface">Leadership</h2>
-        <p className="mt-1 text-sm text-on-surface-variant">Owners & admins</p>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        {leaders.map((person) => (
-          <div
-            key={person.id}
-            className="glass-card group flex items-start gap-4 rounded-lg p-6 transition-colors hover:border-outline-variant"
-          >
-            <MemberAvatar name={person.name} avatarUrl={person.avatarUrl} size={64} />
-            <div>
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <h3 className="font-semibold text-on-surface">{person.name}</h3>
-                <RoleBadge role={person.role} />
-              </div>
-              {person.bio && (
-                <p className="line-clamp-2 text-sm text-on-surface-variant">{person.bio}</p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+    <section id="leadership" className="scroll-mt-4">
+      <ScrollReveal distance={24} duration={600}>
+        <HomeDeckPreview
+          pool={leaders}
+          viewerMode={viewerMode}
+          title={title}
+          subtitle={subtitle}
+          viewAllTarget="overlay"
+          overlayTitle={overlayTitle}
+          canEditRoster={canEditRoster}
+          canDeleteMembers={canDeleteMembers}
+        />
+      </ScrollReveal>
     </section>
   );
 }

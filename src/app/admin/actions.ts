@@ -1,24 +1,31 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { games, members, resources, siteContent } from "@/lib/db/schema";
-import { requireAuth } from "@/lib/auth";
-import { setGameMembers } from "@/lib/queries";
+import { games, memberGames, members, resources, siteContent, users } from "@/lib/db/schema";
+import { purgeOrphanRosterByEmail, purgeUserCompletely } from "@/lib/auth/purge-user";
+import { auth, requireStaff } from "@/lib/auth";
+import { canDeleteMembers, isUndeletableStaffAccount } from "@/lib/auth/staff";
+import { saveImage } from "@/lib/uploads/save-image";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { setGameMembers } from "@/lib/queries";
 
 async function assertAdmin() {
-  await requireAuth();
+  await requireStaff();
 }
 
 export async function updateSiteContent(formData: FormData) {
   await assertAdmin();
   const tagline = formData.get("tagline") as string;
+  const aboutTitle = formData.get("aboutTitle") as string;
+  const aboutImageUrl = formData.get("aboutImageUrl") as string;
   const aboutMarkdown = formData.get("aboutMarkdown") as string;
   const storyMarkdown = (formData.get("storyMarkdown") as string) || null;
   const foundedLabel = formData.get("foundedLabel") as string;
   const foundedHistory = formData.get("foundedHistory") as string;
   const pinnedNote = (formData.get("pinnedNote") as string) || null;
+  const highlightsJson = formData.get("highlightsJson") as string;
+  const homepageJson = (formData.get("homepageJson") as string) || "{}";
 
   const existing = await db.select().from(siteContent).limit(1);
   if (existing[0]) {
@@ -26,26 +33,75 @@ export async function updateSiteContent(formData: FormData) {
       .update(siteContent)
       .set({
         tagline,
+        aboutTitle,
+        aboutImageUrl,
         aboutMarkdown,
         storyMarkdown,
         foundedLabel,
         foundedHistory,
         pinnedNote,
+        highlightsJson,
+        homepageJson,
       })
       .where(eq(siteContent.id, existing[0].id));
   } else {
     await db.insert(siteContent).values({
       tagline,
+      aboutTitle,
+      aboutImageUrl,
       aboutMarkdown,
       storyMarkdown,
       foundedLabel,
       foundedHistory,
       pinnedNote,
+      highlightsJson,
+      homepageJson,
     });
   }
 
   revalidatePath("/");
   revalidatePath("/admin");
+}
+
+export async function uploadSiteAboutImage(
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  await assertAdmin();
+
+  const file = formData.get("aboutImage");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Choose an image file to upload." };
+  }
+
+  try {
+    const url = await saveImage(file, "images/about", "about");
+
+    const existing = await db.select().from(siteContent).limit(1);
+    if (existing[0]) {
+      await db
+        .update(siteContent)
+        .set({ aboutImageUrl: url })
+        .where(eq(siteContent.id, existing[0].id));
+    } else {
+      await db.insert(siteContent).values({
+        tagline: "Our group. Our games. Our space.",
+        aboutTitle: "About Lodus",
+        aboutImageUrl: url,
+        aboutMarkdown: "",
+        foundedLabel: "March 2024",
+        foundedHistory: "",
+        highlightsJson: "[]",
+        homepageJson: "{}",
+      });
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { ok: true, url };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Upload failed.";
+    return { ok: false, error: message };
+  }
 }
 
 export async function upsertMember(formData: FormData) {
@@ -72,8 +128,33 @@ export async function upsertMember(formData: FormData) {
 }
 
 export async function deleteMember(id: number) {
-  await assertAdmin();
-  await db.delete(members).where(eq(members.id, id));
+  const session = await auth();
+  const email = session?.user?.email?.trim().toLowerCase() ?? "";
+  if (!canDeleteMembers(email)) {
+    throw new Error("Only the admin account can delete members.");
+  }
+  const row = await db.select().from(members).where(eq(members.id, id)).limit(1);
+  const member = row[0];
+  if (!member) return;
+
+  if (member.email?.trim()) {
+    const memberEmail = member.email.trim().toLowerCase();
+    if (isUndeletableStaffAccount(memberEmail)) {
+      throw new Error("The site admin account cannot be deleted.");
+    }
+    const userRow = await db.select().from(users).where(eq(users.email, memberEmail)).limit(1);
+    if (userRow[0]) {
+      await purgeUserCompletely(userRow[0].id, memberEmail);
+      revalidatePath("/");
+      revalidatePath("/admin/members");
+      return;
+    }
+    await purgeOrphanRosterByEmail(email);
+  } else {
+    await db.delete(memberGames).where(eq(memberGames.memberId, id));
+    await db.delete(members).where(eq(members.id, id));
+  }
+
   revalidatePath("/");
   revalidatePath("/admin/members");
 }

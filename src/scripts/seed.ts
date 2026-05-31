@@ -1,127 +1,117 @@
 import { db } from "../lib/db";
+import { LODUS_FOUNDED_HISTORY, LODUS_STARTED_LABEL } from "../lib/home-copy";
+import bcrypt from "bcryptjs";
 import {
   games,
   memberGames,
   members,
   resources,
   siteContent,
+  users,
+  roles,
 } from "../lib/db/schema";
+
+const SYSTEM_ROLES = [
+  {
+    name: "Member",
+    slug: "member",
+    color: "#9a8a90",
+    permissions: "{}",
+    isSystem: true,
+    sortOrder: 0,
+  },
+  {
+    name: "Admin",
+    slug: "admin",
+    color: "#ff4655",
+    permissions: JSON.stringify({
+      manageRoles: true,
+      approveMembers: true,
+      viewAuditLogs: true,
+      manageSite: true,
+      editProfile: true,
+    }),
+    isSystem: true,
+    sortOrder: 1,
+  },
+  {
+    name: "Owner",
+    slug: "owner",
+    color: "#fbbf24",
+    permissions: JSON.stringify({
+      manageRoles: true,
+      approveMembers: true,
+      viewAuditLogs: true,
+      manageSite: true,
+      editProfile: true,
+    }),
+    isSystem: true,
+    sortOrder: 2,
+  },
+] as const;
 
 async function seed() {
   console.log("Seeding database...");
 
+  await db.delete(users);
   await db.delete(memberGames);
   await db.delete(resources);
   await db.delete(games);
   await db.delete(members);
   await db.delete(siteContent);
 
+  for (const role of SYSTEM_ROLES) {
+    await db.insert(roles).values({ ...role }).onConflictDoNothing();
+  }
+
+  const allRoles = await db.select().from(roles);
+  const ownerRoleId = allRoles.find((r) => r.slug === "owner")?.id ?? null;
+
+  const staffPasswordHash = await bcrypt.hash("adminpassword123", 12);
+  const staffEmail = (process.env.ADMIN_EMAIL ?? "loduuuss@gmail.com").toLowerCase().trim();
+
+  // Portal staff (single inbox: login, approvals, full access)
+  await db.insert(users).values({
+    email: staffEmail,
+    name: "Admin",
+    passwordHash: staffPasswordHash,
+    status: "approved",
+    emailVerified: true,
+    roleId: ownerRoleId,
+    hasCustomPassword: true,
+  });
+
+  await db.insert(members).values({
+    name: "Admin",
+    email: staffEmail,
+    role: "owner",
+    status: "offline",
+    tagline: "Founder",
+    sortOrder: 1,
+  });
+
+  // Insert default siteContent
   await db.insert(siteContent).values({
     tagline: "Our group. Our games. Our space.",
     aboutMarkdown: `Lodus is a friend group built around showing up for each other—whether we're coordinating a ranked night, trying a new co-op, or just hanging in voice.
 
 We keep things organized enough to actually play together, and relaxed enough that it still feels like friends, not a clan.`,
     storyMarkdown: `What started as a few people in the same games turned into a standing group with regular sessions and shared resources. Lodus is simply our name for that space.`,
-    foundedLabel: "March 2024",
-    foundedHistory:
-      "Founded as a small, steady group for friends who wanted a reliable place to plan sessions and share links.",
+    foundedLabel: LODUS_STARTED_LABEL,
+    foundedHistory: LODUS_FOUNDED_HISTORY,
     pinnedNote: null,
   });
 
-  const insertedMembers = await db
-    .insert(members)
-    .values([
-      {
-        name: "Marcus R.",
-        role: "owner",
-        status: "online",
-        tagline: "Founder",
-        bio: "Systems architect and community founder. Oversees infrastructure and vision.",
-        sortOrder: 1,
-      },
-      {
-        name: "Elena V.",
-        role: "admin",
-        status: "online",
-        tagline: "Operations",
-        bio: "Operations lead. Manages schedules, events, and member onboarding.",
-        sortOrder: 2,
-      },
-      {
-        name: "Alex M.",
-        role: "member",
-        status: "online",
-        tagline: "FPS & co-op",
-        sortOrder: 3,
-      },
-      {
-        name: "Sarah J.",
-        role: "member",
-        status: "away",
-        tagline: "RPG nights",
-        sortOrder: 4,
-      },
-      {
-        name: "Mike K.",
-        role: "member",
-        status: "in_game",
-        tagline: "Sandbox games",
-        sortOrder: 5,
-      },
-      {
-        name: "David Chen",
-        role: "member",
-        status: "offline",
-        tagline: "Strategy",
-        sortOrder: 6,
-      },
-      {
-        name: "Amina Patel",
-        role: "member",
-        status: "online",
-        tagline: "Multi-platform",
-        sortOrder: 7,
-      },
-      {
-        name: "James Wilson",
-        role: "member",
-        status: "away",
-        tagline: "Voice chat regular",
-        sortOrder: 8,
-      },
-    ])
-    .returning();
-
-  const insertedGames = await db
-    .insert(games)
-    .values([
-      { name: "Valorant", sortOrder: 1 },
-      { name: "Minecraft", sortOrder: 2 },
-      { name: "Rust", sortOrder: 3 },
-      { name: "Baldur's Gate 3", sortOrder: 4 },
-      { name: "Helldivers 2", sortOrder: 5 },
-    ])
-    .returning();
-
-  const byName = (n: string) => insertedMembers.find((m) => m.name.startsWith(n))!;
-  const gameByName = (n: string) => insertedGames.find((g) => g.name === n)!;
-
-  await db.insert(memberGames).values([
-    { memberId: byName("Alex").id, gameId: gameByName("Valorant").id },
-    { memberId: byName("Sarah").id, gameId: gameByName("Valorant").id },
-    { memberId: byName("Mike").id, gameId: gameByName("Valorant").id },
-    { memberId: byName("Alex").id, gameId: gameByName("Minecraft").id },
-    { memberId: byName("David").id, gameId: gameByName("Minecraft").id },
-    { memberId: byName("Amina").id, gameId: gameByName("Minecraft").id },
-    { memberId: byName("Mike").id, gameId: gameByName("Rust").id },
-    { memberId: byName("James").id, gameId: gameByName("Rust").id },
-    { memberId: byName("Sarah").id, gameId: gameByName("Baldur's Gate 3").id },
-    { memberId: byName("Elena").id, gameId: gameByName("Baldur's Gate 3").id },
-    { memberId: byName("Alex").id, gameId: gameByName("Helldivers 2").id },
-    { memberId: byName("Marcus").id, gameId: gameByName("Helldivers 2").id },
-    { memberId: byName("James").id, gameId: gameByName("Helldivers 2").id },
+  // 4. Insert default games (but no static memberGames links)
+  await db.insert(games).values([
+    { name: "Valorant", sortOrder: 1 },
+    { name: "Minecraft", sortOrder: 2 },
+    { name: "Rust", sortOrder: 3 },
+    { name: "Baldur's Gate 3", sortOrder: 4 },
+    { name: "Helldivers 2", sortOrder: 5 },
   ]);
 
+  // 5. Insert default resources
   await db.insert(resources).values([
     {
       title: "Voice channel",

@@ -1,32 +1,30 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { MemberLoginButton } from "./MemberLoginButton";
+import { AuthMenu } from "@/components/auth/AuthMenu";
+import { NoCopyGuard } from "@/components/layout/NoCopyGuard";
+import { isMemberAuthEnabled } from "@/lib/features";
 
-export async function PublicNav() {
+export async function PublicNav({ brandName = "Lodus" }: { brandName?: string }) {
   const session = await auth();
+  const showAuth = isMemberAuthEnabled();
 
   return (
-    <nav className="glass-panel fixed top-0 z-50 w-full border-b border-on-surface/10 shadow-sm">
-      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
-        <Link href="/" className="text-xl font-bold tracking-tight text-on-surface">
-          Lodus
-        </Link>
-        <div className="hidden items-center gap-6 md:flex">
-          <Link href="/#about" className="text-sm text-on-surface-variant transition-colors hover:text-primary">
-            About
+    <NoCopyGuard>
+      <nav className="relative z-10 w-full border-0 bg-transparent shadow-none">
+        <div className="flex h-16 w-full items-center justify-between px-3 sm:px-5 md:px-6">
+          <Link
+            href="/"
+            className="logo-font logo-link shrink-0 text-[clamp(1.25rem,2vw+0.5rem,1.75rem)] font-bold tracking-tight"
+          >
+            {brandName}
           </Link>
-          <Link href="/#leadership" className="text-sm text-on-surface-variant transition-colors hover:text-primary">
-            Team
-          </Link>
-          <Link href="/library" className="text-sm text-on-surface-variant transition-colors hover:text-primary">
-            Library
-          </Link>
-          <Link href="/games" className="text-sm text-on-surface-variant transition-colors hover:text-primary">
-            Games
-          </Link>
+          {showAuth ? (
+            <div className="shrink-0">
+              <AuthMenu session={session} />
+            </div>
+          ) : null}
         </div>
-        <MemberLoginButton session={session} />
-      </div>
-    </nav>
+      </nav>
+    </NoCopyGuard>
   );
 }

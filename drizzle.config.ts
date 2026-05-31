@@ -1,15 +1,19 @@
 import { defineConfig } from "drizzle-kit";
-import fs from "fs";
-import path from "path";
+import { normalizePgConnectionString } from "./src/lib/db/connection-string";
 
-const dbPath = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "lodus.db");
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+function migrationUrl(): string {
+  const raw =
+    process.env.DATABASE_URL_UNPOOLED?.trim() ||
+    process.env.DATABASE_URL?.trim() ||
+    "postgresql://postgres:postgres@localhost:5432/lodus";
+  return normalizePgConnectionString(raw);
+}
 
 export default defineConfig({
   schema: "./src/lib/db/schema.ts",
   out: "./drizzle",
-  dialect: "sqlite",
+  dialect: "postgresql",
   dbCredentials: {
-    url: dbPath,
+    url: migrationUrl(),
   },
 });

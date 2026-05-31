@@ -1,46 +1,97 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { SignOutButton } from "./SignOutButton";
+import { canApproveMembers, isAdminEmail } from "@/lib/auth/staff";
+import { listPendingApplications } from "@/lib/auth/user-service";
+import { isMinimalAdminHub } from "@/lib/features";
+import { MemberProfileMenu } from "./MemberProfileMenu";
+import { NoCopyGuard } from "./NoCopyGuard";
 
-const links = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/site", label: "Site" },
-  { href: "/admin/members", label: "Members" },
-  { href: "/admin/resources", label: "Library" },
-  { href: "/admin/games", label: "Games" },
-];
-
-export async function AdminNav({ active }: { active?: string }) {
+export async function AdminNav({
+  activeTab = "home",
+  brandName = "Lodus",
+}: {
+  activeTab?: string;
+  brandName?: string;
+}) {
   const session = await auth();
+  if (!session?.user) return null;
+
+  const email = session.user.email ?? "";
+  const roleSlug = session.user.roleSlug;
+  const isAdmin = isAdminEmail(email) || roleSlug === "admin";
+  const canApprove = canApproveMembers(email, roleSlug);
+  const minimalHub = isMinimalAdminHub();
+
+  let pendingCount = 0;
+  if (canApprove && !minimalHub) {
+    const pending = await listPendingApplications();
+    pendingCount = pending.length;
+  }
+
+  const approvalsLink =
+    canApprove && !minimalHub
+      ? {
+          id: "approvals",
+          href: "/?tab=approvals",
+          label: pendingCount > 0 ? `Approvals (${pendingCount})` : "Approvals",
+        }
+      : null;
+
+  const links = minimalHub && isAdmin
+    ? [
+        { id: "members", href: "/?tab=members", label: "Members" },
+        { id: "site", href: "/?tab=site", label: "Site Settings" },
+      ]
+    : isAdmin
+      ? [
+          ...(approvalsLink ? [approvalsLink] : []),
+          { id: "members", href: "/?tab=members", label: "Members" },
+          { id: "roles", href: "/?tab=roles", label: "Role Management" },
+          { id: "audit", href: "/?tab=audit", label: "Audit Logs" },
+          { id: "site", href: "/?tab=site", label: "Site Settings" },
+        ]
+      : [
+          ...(approvalsLink ? [approvalsLink] : []),
+          { id: "social", href: "/?tab=social", label: "Social" },
+          { id: "members", href: "/?tab=members", label: "Members" },
+          { id: "broadcast", href: "/?tab=broadcast", label: "Broadcast" },
+          { id: "leaderboard", href: "/?tab=leaderboard", label: "Leaderboard" },
+        ];
 
   return (
-    <header className="border-b border-border-subtle bg-white">
-      <div className="mx-auto flex h-16 max-w-[960px] items-center justify-between px-6">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="text-lg font-bold text-on-surface">Lodus</Link>
-          <nav className="hidden gap-6 md:flex">
+    <NoCopyGuard>
+      <header className="relative z-10 w-full border-0 bg-transparent shadow-none">
+        <div className="grid h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-4 px-3 sm:px-5 md:px-6">
+          <Link
+            href="/"
+            data-active={activeTab === "home" ? "true" : "false"}
+            className="logo-font logo-link shrink-0 text-[clamp(1.25rem,2vw+0.5rem,1.75rem)] font-bold tracking-tight"
+          >
+            {brandName}
+          </Link>
+
+          <nav className="flex h-full min-w-0 items-center justify-center gap-5 overflow-x-auto scrollbar-none sm:gap-6">
             {links.map((link) => (
               <Link
-                key={link.href}
+                key={link.id}
                 href={link.href}
-                className={`text-sm font-medium transition-colors ${
-                  active === link.href
-                    ? "border-b-2 border-primary pb-1 text-primary"
-                    : "text-on-surface-variant hover:text-primary"
+                className={`relative flex shrink-0 items-center whitespace-nowrap py-2 text-[10px] font-bold uppercase tracking-widest transition-colors duration-200 ${
+                  activeTab === link.id
+                    ? "text-on-surface"
+                    : "text-on-surface-variant/50 hover:text-on-surface"
                 }`}
               >
                 {link.label}
+                {activeTab === link.id && (
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-primary" />
+                )}
               </Link>
             ))}
           </nav>
+
+          <MemberProfileMenu session={session} />
         </div>
-        <div className="flex items-center gap-4">
-          <span className="hidden text-sm text-on-surface-variant sm:inline">
-            {session?.user?.email}
-          </span>
-          <SignOutButton />
-        </div>
-      </div>
-    </header>
+      </header>
+    </NoCopyGuard>
   );
 }
