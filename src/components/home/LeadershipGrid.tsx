@@ -1,5 +1,6 @@
 "use client";
 
+import { HomeDeckEmptyState } from "@/components/home/HomeDeckEmptyState";
 import { HomeDeckPreview } from "@/components/home/HomeDeckPreview";
 import { ScrollReveal } from "@/components/layout/ScrollReveal";
 import type { RosterMember, RosterViewerMode } from "@/lib/members/roster-types";
@@ -21,11 +22,12 @@ export function LeadershipGrid({
   canEditRoster?: boolean;
   canDeleteMembers?: boolean;
 }) {
-  if (leaders.length === 0) return null;
-
   return (
     <section id="leadership" className="scroll-mt-4">
       <ScrollReveal distance={24} duration={600}>
+        {leaders.length === 0 ? (
+          <HomeDeckEmptyState title={title} subtitle={subtitle} />
+        ) : (
         <HomeDeckPreview
           pool={leaders}
           viewerMode={viewerMode}
@@ -36,6 +38,7 @@ export function LeadershipGrid({
           canEditRoster={canEditRoster}
           canDeleteMembers={canDeleteMembers}
         />
+        )}
       </ScrollReveal>
     </section>
   );

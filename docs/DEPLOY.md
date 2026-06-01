@@ -171,3 +171,53 @@ Presence is stored in Neon (`discord_voice_snapshot`) so all Vercel instances se
 When `S3_BUCKET` and `S3_ACCESS_KEY_ID` are set, avatars upload to S3/R2. Otherwise files save to `public/uploads/`.
 
 On Vercel/Render, local disk is not persistent — use S3/R2 for production avatar uploads.
+
+---
+
+## Troubleshooting
+
+### Google OAuth: `Error 400: redirect_uri_mismatch`
+
+NextAuth sends Google a callback URL built from **`AUTH_URL`** on the server:
+
+`{AUTH_URL}/api/auth/callback/google`
+
+**Fix (no code change):**
+
+1. **Vercel → Project → Settings → Environment Variables (Production)**  
+   Set `AUTH_URL` to your exact public origin, **no trailing slash**, e.g.  
+   `https://lodus-one.vercel.app`
+
+2. **Google Cloud Console → APIs & Credentials → your OAuth client → Authorized redirect URIs**  
+   Add the **same** URI (must match character-for-character):
+
+   `https://lodus-one.vercel.app/api/auth/callback/google`
+
+3. If you use a custom domain later, add that domain’s callback too and update `AUTH_URL` to match.
+
+4. **Redeploy** Vercel after changing `AUTH_URL`.
+
+`DISCORD_WORKER_MODE` does **not** affect Google login.
+
+**Note:** `ADMIN_EMAIL` on Vercel must match the Gmail you sign in with (check spelling).
+
+---
+
+### Upper / Lower Lodus sections missing on homepage
+
+These decks are **not** controlled by `DISCORD_WORKER_MODE`. They come from **Neon** (`users` + `members`) and **Site Settings → homepage JSON**.
+
+| Symptom | Likely cause |
+|--------|----------------|
+| Whole `#team` block gone (no titles at all) | **Hide section** checked for Leadership and/or Team in Site Settings (stored in `homepageJson`) |
+| Section titles show but no cards | No roster rows on **production** DB, or nobody has **Show in leadership** / **Show in team** |
+| Works locally, empty on prod | Vercel `DATABASE_URL` points at a **different/empty** Neon branch than local `.env.local` |
+
+**Checks:**
+
+1. Open prod in **Incognito** (logged out) — `https://lodus-one.vercel.app`
+2. Compare Vercel `DATABASE_URL` with the Neon project where you added members locally (same host `ep-...`?).
+3. After you can sign in as admin again: **Site** tab → Leadership / Team → ensure **Hide section** is unchecked; titles can be “Upper Lodus” / “Lower Lodus”.
+4. **Members** tab → each person → **Show in leadership deck** / **Show in team deck**.
+
+Re-add members on prod if the production database never had them (admin **Add member to homepage**).

@@ -41,13 +41,13 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
   nav: { brandName: "Lodus" },
   founded: { sectionTitle: "When we started" },
   leadership: {
-    title: "Leadership",
+    title: "Upper Lodus",
     subtitle: "Owners & admins",
     overlayTitle: "All Leadership",
     hidden: false,
   },
   team: {
-    title: "Team",
+    title: "Lower Lodus",
     subtitle: "{{count}} members in the group",
     overlayTitle: "All Members",
     hidden: false,

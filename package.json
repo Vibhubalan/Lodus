@@ -17,6 +17,7 @@
     "db:prune": "tsx src/scripts/prune-roster.ts",
     "db:setup": "drizzle-kit push && tsx src/scripts/seed.ts",
     "db:migrate-sqlite": "tsx src/scripts/migrate-sqlite-to-pg.ts",
+    "db:ensure-homepage": "node --env-file=.env.local node_modules/tsx/dist/cli.mjs src/scripts/ensure-site-homepage.ts",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
