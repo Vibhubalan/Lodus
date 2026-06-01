@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       channels?: CachedVoiceChannel[];
     };
     const channels = Array.isArray(body.channels) ? body.channels : [];
-    writeVoiceCache(channels, !!body.botReady);
+    await writeVoiceCache(channels, !!body.botReady);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

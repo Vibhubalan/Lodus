@@ -212,6 +212,14 @@ export const dailyPlanAcceptances = pgTable(
   (table) => [uniqueIndex("daily_plan_acceptances_user_plan_date_idx").on(table.userId, table.planDate)],
 );
 
+/** Singleton row: live Discord voice presence (worker → Neon, read by Vercel). */
+export const discordVoiceSnapshot = pgTable("discord_voice_snapshot", {
+  singletonKey: text("singleton_key").primaryKey().default("default"),
+  botReady: boolean("bot_ready").notNull().default(false),
+  channelsJson: text("channels_json").notNull().default("[]"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Role = typeof roles.$inferSelect;
 export type AuthToken = typeof authTokens.$inferSelect;

@@ -164,6 +164,8 @@ cd services/discord-worker && npm install && npm start
 
 You do **not** need the separate worker just to show voice channel names — only for live presence updates.
 
+Presence is stored in Neon (`discord_voice_snapshot`) so all Vercel instances see the same data. See **[DISCORD-VOICE.md](./DISCORD-VOICE.md)** for step-by-step action items.
+
 ## Object storage (optional)
 
 When `S3_BUCKET` and `S3_ACCESS_KEY_ID` are set, avatars upload to S3/R2. Otherwise files save to `public/uploads/`.

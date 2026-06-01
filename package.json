@@ -20,7 +20,7 @@
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "discord-worker": "node services/discord-worker/index.mjs",
+    "discord-worker": "node --env-file=.env.local services/discord-worker/index.mjs",
     "docs:verification-pdf": "node scripts/generate-verification-pdf.mjs"
   },
   "dependencies": {

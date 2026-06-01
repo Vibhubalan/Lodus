@@ -48,7 +48,7 @@ class DiscordVoiceTracker {
         `[discord-voice-tracker] Connected as ${this.client.user?.tag ?? "unknown"}`,
       );
       await this.seedVoiceIfNeeded();
-      writeVoiceCache([], true);
+      void writeVoiceCache([], true);
     });
 
     this.client.on("voiceStateUpdate", async (oldState, newState) => {
@@ -257,7 +257,7 @@ class DiscordVoiceTracker {
       channelId,
       users: users.map((user) => ({ ...user })),
     }));
-    writeVoiceCache(channels, this.client.isReady());
+    void writeVoiceCache(channels, this.client.isReady());
   }
 
   getActiveVoiceChannels(): ActiveVoiceChannel[] {

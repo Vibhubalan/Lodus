@@ -125,7 +125,7 @@ export async function GET() {
 
     const trackerReady = await tryRefreshVoicePresence();
 
-    const cached = readVoiceCache();
+    const cached = await readVoiceCache();
     const activeChannels = cached.channels;
     const activeChannelMap = new Map(
       activeChannels.map((channel) => [channel.channelId, channel]),
