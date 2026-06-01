@@ -5,5 +5,8 @@ export function useDiscordWorkerMode(): boolean {
 
 export function shouldStartEmbeddedDiscordBot(): boolean {
   if (!process.env.DISCORD_BOT_TOKEN?.trim()) return false;
-  return !useDiscordWorkerMode();
+  if (useDiscordWorkerMode()) return false;
+  // discord.js gateway does not run reliably on Vercel serverless — use REST for channel list.
+  if (process.env.VERCEL === "1") return false;
+  return true;
 }

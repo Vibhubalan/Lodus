@@ -130,9 +130,25 @@ RESEND_FROM=Lodus <onboarding@yourdomain.com>
 
 SMTP is no longer supported.
 
-## Discord worker (recommended for production)
+## Discord on Vercel (required)
 
-1. Set on the **web** service:
+On **Vercel**, always set on the web app (Production):
+
+```env
+DISCORD_WORKER_MODE=true
+```
+
+This stops `discord.js` from starting inside serverless functions (it crashes and breaks `/api/discord/voice`). The homepage still loads **voice channel names** via Discord REST. Chat uses the same `DISCORD_BOT_TOKEN` + channel id as before.
+
+Also set: `DISCORD_BOT_TOKEN`, `NEXT_PUBLIC_DISCORD_CHANNEL_ID`, `NEXT_PUBLIC_DISCORD_GUILD_ID` (or rely on guild id resolved from the chat channel).
+
+**Local dev:** leave `DISCORD_WORKER_MODE=false` (or unset) so the embedded bot runs with `npm run dev`.
+
+## Discord worker (optional — live “who is in VC”)
+
+For avatars in voice cards when people are connected, run a **second** long-lived process:
+
+1. On **Vercel** (same values as worker):
 
 ```env
 DISCORD_WORKER_MODE=true
@@ -140,13 +156,13 @@ INTERNAL_API_SECRET=your-long-random-secret
 LODUS_API_URL=https://your-domain.com
 ```
 
-2. Run **services/discord-worker** as a second process with the same env + `DISCORD_BOT_TOKEN` and `NEXT_PUBLIC_DISCORD_GUILD_ID`:
+2. On **Render / Fly / your PC** — `services/discord-worker` with `DISCORD_BOT_TOKEN`, `NEXT_PUBLIC_DISCORD_GUILD_ID`, `INTERNAL_API_SECRET`, `LODUS_API_URL`:
 
 ```bash
 cd services/discord-worker && npm install && npm start
 ```
 
-Without the worker, set `DISCORD_WORKER_MODE=false` to use the embedded bot (dev only).
+You do **not** need the separate worker just to show voice channel names — only for live presence updates.
 
 ## Object storage (optional)
 

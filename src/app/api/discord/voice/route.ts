@@ -2,11 +2,6 @@ import { NextResponse } from "next/server";
 import { discordBotHeaders, resolveDiscordGuildId } from "@/lib/discord/api-headers";
 import { readVoiceCache } from "@/lib/discord/voice-cache";
 import { shouldStartEmbeddedDiscordBot } from "@/lib/discord/worker-mode";
-import {
-  ensureVoiceTrackerReady,
-  getActiveVoiceChannels,
-  startVoiceTracker,
-} from "@/lib/discord/voice-tracker";
 
 type DiscordGuildChannel = {
   id: string;
@@ -16,7 +11,7 @@ type DiscordGuildChannel = {
   permission_overwrites?: Array<{
     id: string;
     type: number;
-    deny: string;
+    deny: string | number;
   }>;
 };
 
@@ -41,6 +36,21 @@ const DISCORD_PERMISSION_CONNECT = BigInt(1) << BigInt(20);
 let cachedGuildChannels: DiscordGuildChannel[] | null = null;
 let lastChannelsFetchTime = 0;
 const GUILD_CHANNELS_CACHE_TTL = 300_000;
+
+function parsePermissionBits(value: string | number | undefined | null): bigint {
+  try {
+    if (value === undefined || value === null || value === "") return BigInt(0);
+    return BigInt(value);
+  } catch {
+    return BigInt(0);
+  }
+}
+
+function emptyVoice(stage: string, detail?: string) {
+  const headers: Record<string, string> = { "X-Lodus-Voice-Stage": stage };
+  if (detail) headers["X-Lodus-Voice-Error"] = detail.slice(0, 120);
+  return NextResponse.json([], { status: 200, headers });
+}
 
 async function fetchGuildChannels(
   guildId: string,
@@ -78,11 +88,20 @@ async function fetchGuildChannels(
   return cachedGuildChannels;
 }
 
-function emptyVoice(stage: string) {
-  return NextResponse.json([], {
-    status: 200,
-    headers: { "X-Lodus-Voice-Stage": stage },
-  });
+/** Optional live “who is in VC” — never allowed to break the channel list on serverless. */
+async function tryRefreshVoicePresence(): Promise<boolean> {
+  if (!shouldStartEmbeddedDiscordBot()) return false;
+  try {
+    const { startVoiceTracker, ensureVoiceTrackerReady, getActiveVoiceChannels } =
+      await import("@/lib/discord/voice-tracker");
+    startVoiceTracker();
+    const ready = await ensureVoiceTrackerReady(1_500);
+    if (ready) getActiveVoiceChannels();
+    return ready;
+  } catch (err) {
+    console.warn("[discord-voice-route] Voice tracker skipped:", err);
+    return false;
+  }
 }
 
 export async function GET() {
@@ -102,18 +121,9 @@ export async function GET() {
 
     const joinUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL?.trim() || null;
 
-    // REST channel list first — works on Vercel without a persistent gateway connection.
     const guildChannels = await fetchGuildChannels(guildId, botToken);
 
-    // Best-effort live presence (dev / worker); do not block the response.
-    let trackerReady = false;
-    if (shouldStartEmbeddedDiscordBot()) {
-      startVoiceTracker();
-      trackerReady = await ensureVoiceTrackerReady(1_500);
-      if (trackerReady) {
-        getActiveVoiceChannels();
-      }
-    }
+    const trackerReady = await tryRefreshVoicePresence();
 
     const cached = readVoiceCache();
     const activeChannels = cached.channels;
@@ -158,7 +168,7 @@ export async function GET() {
       const everyoneOverwrite = channel.permission_overwrites?.find(
         (overwrite) => overwrite.type === 0 && overwrite.id === guildId,
       );
-      const denyBits = everyoneOverwrite ? BigInt(everyoneOverwrite.deny || "0") : BigInt(0);
+      const denyBits = parsePermissionBits(everyoneOverwrite?.deny);
       const isLocked = (denyBits & DISCORD_PERMISSION_CONNECT) !== BigInt(0);
 
       return {
@@ -186,7 +196,8 @@ export async function GET() {
       },
     });
   } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
     console.warn("[discord-voice-route] Unexpected route failure:", error);
-    return emptyVoice("error");
+    return emptyVoice("error", detail);
   }
 }
