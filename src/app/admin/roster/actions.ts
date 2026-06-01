@@ -15,6 +15,7 @@ import { authTokens, memberGames, members, roles, users, games } from "@/lib/db/
 import { purgeUserCompletely } from "@/lib/auth/purge-user";
 import { getDefaultMemberRoleId, logAudit } from "@/lib/auth/user-service";
 import { saveImage } from "@/lib/uploads/save-image";
+import { isUploadStorageUnavailableError } from "@/lib/uploads/storage-capability";
 
 export type RosterActionResult =
   | { ok: true; message: string }
@@ -458,14 +459,19 @@ export async function adminCreateRosterMember(
   const showInTeam = formData.get("showInTeam") === "true";
   const showInLeadership = formData.get("showInLeadership") === "true";
   let avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+  let avatarSkippedOnServerless = false;
 
   const avatarFile = formData.get("avatar");
   if (avatarFile instanceof File && avatarFile.size > 0) {
     try {
       avatarUrl = await saveImage(avatarFile, "uploads/avatars", email.split("@")[0] ?? "member");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Avatar upload failed.";
-      return { ok: false, error: message };
+      if (isUploadStorageUnavailableError(err)) {
+        avatarSkippedOnServerless = true;
+      } else {
+        const message = err instanceof Error ? err.message : "Avatar upload failed.";
+        return { ok: false, error: message };
+      }
     }
   }
 
@@ -512,5 +518,9 @@ export async function adminCreateRosterMember(
 
   revalidatePath("/");
   revalidatePath("/profile");
-  return { ok: true, message: `${name} was added to the public roster.` };
+  const base = `${name} was added to the public roster.`;
+  const message = avatarSkippedOnServerless
+    ? `${base} Photo was not saved — add S3/R2 env vars on Vercel to enable uploads, or add without a photo.`
+    : base;
+  return { ok: true, message };
 }

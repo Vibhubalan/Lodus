@@ -21,7 +21,7 @@ For the first production launch, visitors see only the public homepage. Member S
 ### Optional for MVP
 
 - **Resend** — only needed when enrollment emails go live
-- **S3/R2** — avatar uploads; without it, files save to `public/uploads/` (ephemeral on most hosts — prefer S3 for prod)
+- **S3/R2** — **required on Vercel** for profile/about photos; without it you can still add roster members (no photo). Local dev can use `public/uploads/`.
 - **Discord worker** — live chat/presence; homepage works without it
 - **Stripe / donations** — hidden when `NEXT_PUBLIC_DONATIONS_ENABLED=false` (recommended for MVP)
 
