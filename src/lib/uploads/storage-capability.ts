@@ -1,6 +1,10 @@
 /** S3-compatible object storage (R2, S3, etc.). */
 export function hasObjectStorage(): boolean {
-  return !!(process.env.S3_BUCKET?.trim() && process.env.S3_ACCESS_KEY_ID?.trim());
+  return !!(
+    process.env.S3_BUCKET?.trim() &&
+    process.env.S3_ACCESS_KEY_ID?.trim() &&
+    process.env.S3_SECRET_ACCESS_KEY?.trim()
+  );
 }
 
 /** Local `public/` writes work in dev and on traditional Node hosts, not Vercel serverless. */
