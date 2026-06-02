@@ -16,8 +16,8 @@ export function HomeDeckCard({
   const designation = person.description?.trim();
 
   return (
-    <article className="glass-card group flex aspect-square w-full flex-col overflow-hidden rounded-lg p-0 text-left">
-      <div className="relative min-h-0 flex-[7] w-full overflow-hidden">
+    <article className="glass-card group flex w-full flex-col overflow-hidden rounded-lg p-0 text-left">
+      <div className="relative aspect-square w-full overflow-hidden">
         <SafeDisplayImage
           src={person.photoUrl}
           alt={person.name}
@@ -29,7 +29,7 @@ export function HomeDeckCard({
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0507]/95 via-[#0a0507]/25 to-transparent" />
       </div>
 
-      <div className="flex min-h-0 flex-[3] flex-col justify-center gap-1.5 px-4 py-3">
+      <div className="flex min-h-[78px] flex-col justify-center gap-1.5 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-baseline gap-1.5">
             <h3 className="min-w-0 truncate font-semibold text-on-surface">{person.name}</h3>
