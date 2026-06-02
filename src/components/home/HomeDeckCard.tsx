@@ -8,21 +8,15 @@ import type { RosterMember, RosterViewerMode } from "@/lib/members/roster-types"
 export function HomeDeckCard({
   person,
   viewerMode,
-  onClick,
 }: {
   person: RosterMember;
   viewerMode: RosterViewerMode;
-  onClick: () => void;
 }) {
   const showPresence = viewerMode === "member";
-  const blurb = person.bio?.trim() || person.description?.trim();
+  const designation = person.description?.trim();
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="glass-card group flex aspect-square w-full flex-col overflow-hidden rounded-lg p-0 text-left transition-colors hover:border-outline-variant focus:outline-none focus-visible:outline-none"
-    >
+    <article className="glass-card group flex aspect-square w-full flex-col overflow-hidden rounded-lg p-0 text-left">
       <div className="relative min-h-0 flex-[7] w-full overflow-hidden">
         <SafeDisplayImage
           src={person.photoUrl}
@@ -47,10 +41,12 @@ export function HomeDeckCard({
           </div>
           {showPresence ? <StatusBadge status={person.presence} /> : null}
         </div>
-        {blurb ? (
-          <p className="line-clamp-2 text-xs leading-relaxed text-on-surface-variant">{blurb}</p>
+        {designation ? (
+          <p className="line-clamp-1 text-[11px] leading-relaxed text-on-surface-variant">
+            {designation}
+          </p>
         ) : null}
       </div>
-    </button>
+    </article>
   );
 }

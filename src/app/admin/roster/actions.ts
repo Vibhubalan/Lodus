@@ -47,6 +47,7 @@ export async function updateRosterMember(formData: FormData): Promise<RosterActi
   const memberId = memberIdRaw ? Number(memberIdRaw) : null;
   const name = (formData.get("name") as string)?.trim();
   const nickname = (formData.get("nickname") as string)?.trim() || null;
+  const designation = (formData.get("designation") as string)?.trim() || null;
   const authRoleSlug = (formData.get("authRoleSlug") as string)?.trim();
   const rosterRole = formData.get("rosterRole") as "owner" | "admin" | "member";
 
@@ -82,6 +83,7 @@ export async function updateRosterMember(formData: FormData): Promise<RosterActi
       .set({
         name,
         nickname,
+        tagline: designation,
         role: rosterRole,
       })
       .where(eq(members.id, memberId));
@@ -91,6 +93,7 @@ export async function updateRosterMember(formData: FormData): Promise<RosterActi
       name,
       email: user.email,
       nickname,
+      tagline: designation,
       role: rosterRole,
       status: "offline",
       sortOrder: all.length + 1,
@@ -99,7 +102,7 @@ export async function updateRosterMember(formData: FormData): Promise<RosterActi
 
   await logAudit(session.user.email ?? "system", "member.updated", userId, {
     email: user.email,
-    changes: { name, nickname, authRoleSlug, rosterRole },
+    changes: { name, nickname, designation, authRoleSlug, rosterRole },
   });
 
   revalidatePath("/");
@@ -126,6 +129,7 @@ export async function adminUpdateMemberProfileFull(formData: FormData): Promise<
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const phone = (formData.get("phone") as string)?.trim() || null;
   const bio = (formData.get("bio") as string)?.trim() || null;
+  const designation = (formData.get("designation") as string)?.trim() || null;
   const authRoleSlug = (formData.get("authRoleSlug") as string)?.trim();
   const rosterRole = formData.get("rosterRole") as "owner" | "admin" | "member";
   
@@ -179,6 +183,7 @@ export async function adminUpdateMemberProfileFull(formData: FormData): Promise<
     name,
     nickname,
     email,
+    tagline: designation,
     bio,
     role: rosterRole,
     skills: skillsJson || null,
@@ -240,6 +245,7 @@ export async function adminUpdateMemberProfileFull(formData: FormData): Promise<
       email,
       phone,
       bio,
+      designation,
       authRoleSlug,
       rosterRole,
       skills: skillsJson,
@@ -456,6 +462,7 @@ export async function adminCreateRosterMember(
 
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const name = (formData.get("name") as string)?.trim();
+  const designation = (formData.get("designation") as string)?.trim() || null;
   const showInTeam = formData.get("showInTeam") === "true";
   const showInLeadership = formData.get("showInLeadership") === "true";
   let avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
@@ -504,6 +511,7 @@ export async function adminCreateRosterMember(
     avatarUrl,
     role: "member",
     status: "offline",
+    tagline: designation,
     sortOrder: all.length + 1,
     showInTeam,
     showInLeadership,
@@ -512,6 +520,7 @@ export async function adminCreateRosterMember(
   await logAudit(session.user.email ?? "system", "member.invited", inserted[0]?.id, {
     email,
     name,
+    designation,
     showInTeam,
     showInLeadership,
   });

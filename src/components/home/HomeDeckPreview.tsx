@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HomeDeckCard } from "@/components/home/HomeDeckCard";
-import { MembersShowAllOverlay } from "@/components/home/MembersShowAllOverlay";
-import { MemberProfileModal } from "@/components/members/MemberProfileModal";
 import {
   HOME_DECK_SLOT_COUNT,
   pickRotatingSlots,
@@ -23,7 +21,7 @@ type HomeDeckPreviewProps = {
   viewerMode: RosterViewerMode;
   title: string;
   subtitle?: string;
-  viewAllTarget?: "overlay" | "members-tab";
+  viewAllTarget?: "members-tab";
   overlayTitle?: string;
   canEditRoster?: boolean;
   canDeleteMembers?: boolean;
@@ -34,10 +32,10 @@ export function HomeDeckPreview({
   viewerMode,
   title,
   subtitle,
-  viewAllTarget = "overlay",
-  overlayTitle = "All Members",
-  canEditRoster = false,
-  canDeleteMembers = false,
+  viewAllTarget = "members-tab",
+  overlayTitle: _overlayTitle,
+  canEditRoster: _canEditRoster,
+  canDeleteMembers: _canDeleteMembers,
 }: HomeDeckPreviewProps) {
   const router = useRouter();
   const shouldRotate = pool.length > HOME_DECK_SLOT_COUNT;
@@ -46,14 +44,11 @@ export function HomeDeckPreview({
   const [slots, setSlots] = useState(() => pickStableSlots(pool));
   const [animPhase, setAnimPhase] = useState<DeckAnimPhase>("idle");
   const animPhaseRef = useRef<DeckAnimPhase>("idle");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showAllOpen, setShowAllOpen] = useState(false);
 
   animPhaseRef.current = animPhase;
 
   const display =
     shouldRotate && rotationReady ? slots : pickStableSlots(pool);
-  const selected = pool.find((m) => m.id === selectedId);
 
   useEffect(() => {
     reduceMotionRef.current = window.matchMedia(
@@ -109,9 +104,7 @@ export function HomeDeckPreview({
   const handleViewAll = () => {
     if (viewAllTarget === "members-tab" && viewerMode === "member") {
       router.push("/?tab=members");
-      return;
     }
-    setShowAllOpen(true);
   };
 
   const gridAnimClass =
@@ -130,7 +123,7 @@ export function HomeDeckPreview({
             <p className="mt-1 text-sm text-on-surface-variant">{subtitle}</p>
           ) : null}
         </div>
-        {pool.length > HOME_DECK_SLOT_COUNT ? (
+        {viewerMode === "member" && pool.length > HOME_DECK_SLOT_COUNT ? (
           <button
             type="button"
             onClick={handleViewAll}
@@ -149,31 +142,9 @@ export function HomeDeckPreview({
             key={person.id}
             person={person}
             viewerMode={viewerMode}
-            onClick={() => setSelectedId(person.id)}
           />
         ))}
       </div>
-
-      {selected ? (
-        <MemberProfileModal
-          member={selected}
-          viewerMode={viewerMode}
-          onClose={() => setSelectedId(null)}
-          canEditRoster={canEditRoster}
-          canDeleteMembers={canDeleteMembers}
-        />
-      ) : null}
-
-      {showAllOpen ? (
-        <MembersShowAllOverlay
-          roster={pool}
-          viewerMode={viewerMode}
-          title={overlayTitle}
-          onClose={() => setShowAllOpen(false)}
-          canEditRoster={canEditRoster}
-          canDeleteMembers={canDeleteMembers}
-        />
-      ) : null}
     </>
   );
 }

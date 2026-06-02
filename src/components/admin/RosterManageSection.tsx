@@ -60,7 +60,7 @@ export function RosterManageSection({
             Manage Roster
           </h1>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Edit display names, card nicknames, auth roles, and roster roles.
+            Edit display names, designations, card nicknames, auth roles, and roster roles.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -131,6 +131,7 @@ export function RosterManageSection({
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Nickname</th>
+              <th className="px-4 py-3">Designation</th>
               <th className="px-4 py-3">Auth</th>
               <th className="px-4 py-3">Roster</th>
               <th className="px-4 py-3">Presence</th>
@@ -142,6 +143,7 @@ export function RosterManageSection({
               <tr key={row.id} className="border-b border-white/5 hover:bg-white/[0.02]">
                 <td className="px-4 py-3 font-medium text-on-surface">{row.name}</td>
                 <td className="px-4 py-3 text-on-surface-variant">{row.nickname ?? "—"}</td>
+                <td className="px-4 py-3 text-on-surface-variant">{row.description?.trim() || "—"}</td>
                 <td className="px-4 py-3 text-on-surface-variant">{row.roleSlug ?? "member"}</td>
                 <td className="px-4 py-3 text-on-surface-variant">{row.rosterRole}</td>
                 <td className="px-4 py-3">
@@ -213,6 +215,15 @@ export function RosterManageSection({
               <input
                 name="nickname"
                 defaultValue={editing.nickname ?? ""}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-on-surface"
+              />
+            </label>
+            <label className="block text-xs text-on-surface-variant">
+              Designation / title
+              <input
+                name="designation"
+                defaultValue={editing.description ?? ""}
+                placeholder="e.g. Software Engineer"
                 className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-on-surface"
               />
             </label>

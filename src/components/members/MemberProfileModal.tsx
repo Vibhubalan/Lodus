@@ -54,6 +54,7 @@ export function MemberProfileModal({
   const [email, setEmail] = useState(member.email ?? "");
   const [phone, setPhone] = useState(member.phone ?? "");
   const [bio, setBio] = useState(member.bio ?? "");
+  const [designation, setDesignation] = useState(member.description ?? "");
   const [avatarUrl, setAvatarUrl] = useState(member.photoUrl ?? "");
   const [authRoleSlug, setAuthRoleSlug] = useState(member.roleSlug ?? "member");
   const [rosterRole, setRosterRole] = useState(member.rosterRole ?? "member");
@@ -82,6 +83,7 @@ export function MemberProfileModal({
     email !== (member.email ?? "") ||
     phone !== (member.phone ?? "") ||
     bio !== (member.bio ?? "") ||
+    designation !== (member.description ?? "") ||
     avatarUrl !== (member.photoUrl ?? "") ||
     authRoleSlug !== (member.roleSlug ?? "member") ||
     rosterRole !== (member.rosterRole ?? "member") ||
@@ -94,6 +96,7 @@ export function MemberProfileModal({
     setEmail(member.email ?? "");
     setPhone(member.phone ?? "");
     setBio(member.bio ?? "");
+    setDesignation(member.description ?? "");
     setAvatarUrl(member.photoUrl ?? "");
     setAuthRoleSlug(member.roleSlug ?? "member");
     setRosterRole(member.rosterRole ?? "member");
@@ -166,6 +169,7 @@ export function MemberProfileModal({
     formData.set("email", email);
     formData.set("phone", phone);
     formData.set("bio", bio);
+    formData.set("designation", designation);
     formData.set("avatarUrl", avatarUrl);
     formData.set("authRoleSlug", authRoleSlug);
     formData.set("rosterRole", rosterRole);
@@ -355,13 +359,26 @@ export function MemberProfileModal({
 
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-                      Card Nickname / Title
+                      Card nickname
                     </label>
                     <input
                       type="text"
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
                       placeholder="e.g. IGL"
+                      className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                      Designation / title
+                    </label>
+                    <input
+                      type="text"
+                      value={designation}
+                      onChange={(e) => setDesignation(e.target.value)}
+                      placeholder="e.g. Software Engineer"
                       className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
                     />
                   </div>

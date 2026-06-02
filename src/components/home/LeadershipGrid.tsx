@@ -33,7 +33,6 @@ export function LeadershipGrid({
           viewerMode={viewerMode}
           title={title}
           subtitle={subtitle}
-          viewAllTarget="overlay"
           overlayTitle={overlayTitle}
           canEditRoster={canEditRoster}
           canDeleteMembers={canDeleteMembers}

@@ -41,8 +41,7 @@ export function MembersTeamPreview({
             viewerMode={viewerMode}
             title={title}
             subtitle={resolvedSubtitle}
-            viewAllTarget={viewerMode === "member" ? "members-tab" : "overlay"}
-            overlayTitle={overlayTitle}
+            viewAllTarget="members-tab"
             canEditRoster={canEditRoster}
             canDeleteMembers={canDeleteMembers}
           />

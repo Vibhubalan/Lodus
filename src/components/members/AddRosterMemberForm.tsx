@@ -113,6 +113,18 @@ export function AddRosterMemberForm() {
 
       <div className="space-y-1">
         <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+          Designation / title
+        </label>
+        <input
+          name="designation"
+          type="text"
+          placeholder="e.g. Software Engineer"
+          className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
           Profile photo
         </label>
         <input
