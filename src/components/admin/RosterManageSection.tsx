@@ -14,6 +14,12 @@ import type { RosterMember } from "@/lib/members/roster-types";
 const AUTH_ROLES = ["owner", "admin", "member"] as const;
 const ROSTER_ROLES = ["owner", "admin", "member"] as const;
 
+function deriveDeckPlacement(member: RosterMember): "upper" | "lower" | "none" {
+  if (member.showInLeadership) return "upper";
+  if (member.showInTeam) return "lower";
+  return "none";
+}
+
 export function RosterManageSection({
   roster,
   canDeleteMembers = false,
@@ -132,6 +138,7 @@ export function RosterManageSection({
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Nickname</th>
               <th className="px-4 py-3">Designation</th>
+              <th className="px-4 py-3">Deck</th>
               <th className="px-4 py-3">Auth</th>
               <th className="px-4 py-3">Roster</th>
               <th className="px-4 py-3">Presence</th>
@@ -144,6 +151,9 @@ export function RosterManageSection({
                 <td className="px-4 py-3 font-medium text-on-surface">{row.name}</td>
                 <td className="px-4 py-3 text-on-surface-variant">{row.nickname ?? "—"}</td>
                 <td className="px-4 py-3 text-on-surface-variant">{row.description?.trim() || "—"}</td>
+                <td className="px-4 py-3 text-on-surface-variant">
+                  {row.showInLeadership ? "Upper" : row.showInTeam ? "Lower" : "Hidden"}
+                </td>
                 <td className="px-4 py-3 text-on-surface-variant">{row.roleSlug ?? "member"}</td>
                 <td className="px-4 py-3 text-on-surface-variant">{row.rosterRole}</td>
                 <td className="px-4 py-3">
@@ -226,6 +236,18 @@ export function RosterManageSection({
                 placeholder="e.g. Software Engineer"
                 className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-on-surface"
               />
+            </label>
+            <label className="block text-xs text-on-surface-variant">
+              Homepage deck placement
+              <select
+                name="deckPlacement"
+                defaultValue={deriveDeckPlacement(editing)}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-on-surface"
+              >
+                <option value="lower">Lower Lodus</option>
+                <option value="upper">Upper Lodus</option>
+                <option value="none">Not shown on homepage</option>
+              </select>
             </label>
             <label className="block text-xs text-on-surface-variant">
               Auth role

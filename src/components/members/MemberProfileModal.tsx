@@ -26,6 +26,14 @@ type DB_Game = {
   name: string;
 };
 
+type DeckPlacement = "upper" | "lower" | "none";
+
+function deriveDeckPlacement(member: RosterMember): DeckPlacement {
+  if (member.showInLeadership) return "upper";
+  if (member.showInTeam) return "lower";
+  return "none";
+}
+
 export function MemberProfileModal({
   member,
   viewerMode,
@@ -57,6 +65,9 @@ export function MemberProfileModal({
   const [designation, setDesignation] = useState(member.description ?? "");
   const [avatarUrl, setAvatarUrl] = useState(member.photoUrl ?? "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [deckPlacement, setDeckPlacement] = useState<DeckPlacement>(
+    deriveDeckPlacement(member),
+  );
   const [authRoleSlug, setAuthRoleSlug] = useState(member.roleSlug ?? "member");
   const [rosterRole, setRosterRole] = useState(member.rosterRole ?? "member");
   const [selectedSkills, setSelectedSkills] = useState<MemberSkills>({
@@ -85,6 +96,7 @@ export function MemberProfileModal({
     phone !== (member.phone ?? "") ||
     bio !== (member.bio ?? "") ||
     designation !== (member.description ?? "") ||
+    deckPlacement !== deriveDeckPlacement(member) ||
     avatarFile !== null ||
     avatarUrl !== (member.photoUrl ?? "") ||
     authRoleSlug !== (member.roleSlug ?? "member") ||
@@ -101,6 +113,7 @@ export function MemberProfileModal({
     setDesignation(member.description ?? "");
     setAvatarUrl(member.photoUrl ?? "");
     setAvatarFile(null);
+    setDeckPlacement(deriveDeckPlacement(member));
     setAuthRoleSlug(member.roleSlug ?? "member");
     setRosterRole(member.rosterRole ?? "member");
     setSelectedSkills({
@@ -173,6 +186,7 @@ export function MemberProfileModal({
     formData.set("phone", phone);
     formData.set("bio", bio);
     formData.set("designation", designation);
+    formData.set("deckPlacement", deckPlacement);
     formData.set("avatarUrl", avatarUrl);
     if (avatarFile) formData.set("avatar", avatarFile);
     formData.set("authRoleSlug", authRoleSlug);
@@ -411,6 +425,21 @@ export function MemberProfileModal({
                       placeholder="+1 234 567 890"
                       className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
                     />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                      Homepage deck placement
+                    </label>
+                    <select
+                      value={deckPlacement}
+                      onChange={(e) => setDeckPlacement(e.target.value as DeckPlacement)}
+                      className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                    >
+                      <option value="lower" className="bg-[#0b0e14]">Lower Lodus</option>
+                      <option value="upper" className="bg-[#0b0e14]">Upper Lodus</option>
+                      <option value="none" className="bg-[#0b0e14]">Not shown on homepage</option>
+                    </select>
                   </div>
 
                   <div className="space-y-1">

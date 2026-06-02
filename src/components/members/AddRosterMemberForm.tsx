@@ -136,15 +136,19 @@ export function AddRosterMemberForm() {
         />
       </div>
 
-      <div className="flex flex-wrap gap-4 text-xs text-on-surface-variant">
-        <label className="flex items-center gap-2">
-          <input name="showInTeam" type="checkbox" value="true" defaultChecked className="rounded" />
-          Show in team deck (Lower Lodus)
+      <div className="space-y-1">
+        <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+          Homepage deck placement
         </label>
-        <label className="flex items-center gap-2">
-          <input name="showInLeadership" type="checkbox" value="true" className="rounded" />
-          Show in leadership deck (Upper Lodus)
-        </label>
+        <select
+          name="deckPlacement"
+          defaultValue="lower"
+          className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+        >
+          <option value="lower">Lower Lodus</option>
+          <option value="upper">Upper Lodus</option>
+          <option value="none">Not shown on homepage</option>
+        </select>
       </div>
 
       <button

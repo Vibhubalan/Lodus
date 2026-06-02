@@ -21,6 +21,31 @@ export type RosterActionResult =
   | { ok: true; message: string }
   | { ok: false; error: string };
 
+type DeckPlacement = "upper" | "lower" | "none";
+
+function resolveDeckPlacement(formData: FormData): DeckPlacement {
+  const explicit = (formData.get("deckPlacement") as string | null)?.trim();
+  if (explicit === "upper" || explicit === "lower" || explicit === "none") {
+    return explicit;
+  }
+  // Backward-compatible fallback for older forms using two checkboxes.
+  const showInLeadership = formData.get("showInLeadership") === "true";
+  const showInTeam = formData.get("showInTeam") === "true";
+  if (showInLeadership) return "upper";
+  if (showInTeam) return "lower";
+  return "none";
+}
+
+function toDeckFlags(placement: DeckPlacement): {
+  showInLeadership: boolean;
+  showInTeam: boolean;
+} {
+  return {
+    showInLeadership: placement === "upper",
+    showInTeam: placement === "lower",
+  };
+}
+
 export async function requireRosterEditPermission() {
   const session = await auth();
   if (!session?.user?.email) {
@@ -48,6 +73,8 @@ export async function updateRosterMember(formData: FormData): Promise<RosterActi
   const name = (formData.get("name") as string)?.trim();
   const nickname = (formData.get("nickname") as string)?.trim() || null;
   const designation = (formData.get("designation") as string)?.trim() || null;
+  const deckPlacement = resolveDeckPlacement(formData);
+  const deckFlags = toDeckFlags(deckPlacement);
   const authRoleSlug = (formData.get("authRoleSlug") as string)?.trim();
   const rosterRole = formData.get("rosterRole") as "owner" | "admin" | "member";
 
@@ -85,6 +112,8 @@ export async function updateRosterMember(formData: FormData): Promise<RosterActi
         nickname,
         tagline: designation,
         role: rosterRole,
+        showInLeadership: deckFlags.showInLeadership,
+        showInTeam: deckFlags.showInTeam,
       })
       .where(eq(members.id, memberId));
   } else {
@@ -97,12 +126,14 @@ export async function updateRosterMember(formData: FormData): Promise<RosterActi
       role: rosterRole,
       status: "offline",
       sortOrder: all.length + 1,
+      showInLeadership: deckFlags.showInLeadership,
+      showInTeam: deckFlags.showInTeam,
     });
   }
 
   await logAudit(session.user.email ?? "system", "member.updated", userId, {
     email: user.email,
-    changes: { name, nickname, designation, authRoleSlug, rosterRole },
+    changes: { name, nickname, designation, deckPlacement, authRoleSlug, rosterRole },
   });
 
   revalidatePath("/");
@@ -130,6 +161,8 @@ export async function adminUpdateMemberProfileFull(formData: FormData): Promise<
   const phone = (formData.get("phone") as string)?.trim() || null;
   const bio = (formData.get("bio") as string)?.trim() || null;
   const designation = (formData.get("designation") as string)?.trim() || null;
+  const deckPlacement = resolveDeckPlacement(formData);
+  const deckFlags = toDeckFlags(deckPlacement);
   const authRoleSlug = (formData.get("authRoleSlug") as string)?.trim();
   const rosterRole = formData.get("rosterRole") as "owner" | "admin" | "member";
   
@@ -204,6 +237,8 @@ export async function adminUpdateMemberProfileFull(formData: FormData): Promise<
     bio,
     role: rosterRole,
     skills: skillsJson || null,
+    showInLeadership: deckFlags.showInLeadership,
+    showInTeam: deckFlags.showInTeam,
     ...(avatarUrl ? { avatarUrl } : {}),
   };
 
@@ -263,6 +298,7 @@ export async function adminUpdateMemberProfileFull(formData: FormData): Promise<
       phone,
       bio,
       designation,
+      deckPlacement,
       authRoleSlug,
       rosterRole,
       skills: skillsJson,
@@ -480,8 +516,8 @@ export async function adminCreateRosterMember(
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const name = (formData.get("name") as string)?.trim();
   const designation = (formData.get("designation") as string)?.trim() || null;
-  const showInTeam = formData.get("showInTeam") === "true";
-  const showInLeadership = formData.get("showInLeadership") === "true";
+  const deckPlacement = resolveDeckPlacement(formData);
+  const deckFlags = toDeckFlags(deckPlacement);
   let avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
   let avatarSkippedOnServerless = false;
 
@@ -530,16 +566,17 @@ export async function adminCreateRosterMember(
     status: "offline",
     tagline: designation,
     sortOrder: all.length + 1,
-    showInTeam,
-    showInLeadership,
+    showInTeam: deckFlags.showInTeam,
+    showInLeadership: deckFlags.showInLeadership,
   });
 
   await logAudit(session.user.email ?? "system", "member.invited", inserted[0]?.id, {
     email,
     name,
     designation,
-    showInTeam,
-    showInLeadership,
+    deckPlacement,
+    showInTeam: deckFlags.showInTeam,
+    showInLeadership: deckFlags.showInLeadership,
   });
 
   revalidatePath("/");
