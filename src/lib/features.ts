@@ -29,3 +29,8 @@ export function isMinimalAdminHub(): boolean {
 export function isDonationsEnabled(): boolean {
   return envFlag("NEXT_PUBLIC_DONATIONS_ENABLED", true);
 }
+
+/** Force light animations everywhere (debug / emergency perf on prod). */
+export function isForceLightAnimationsEnabled(): boolean {
+  return envFlag("NEXT_PUBLIC_FORCE_LIGHT_ANIMATIONS", false);
+}

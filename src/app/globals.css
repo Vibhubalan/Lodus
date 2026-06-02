@@ -315,6 +315,40 @@ button:focus-visible,
   cursor: default;
 }
 
+/* Touch / narrow viewports: lighter GPU work; desktop keeps full effects */
+@media (max-width: 768px), ((hover: none) and (pointer: coarse)) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .hero-animate {
+    animation-duration: 0.35s !important;
+  }
+
+  .scroll-reveal,
+  .scroll-reveal--light {
+    filter: none !important;
+  }
+
+  .home-deck-grid--blur-out,
+  .home-deck-grid--blur-in {
+    animation: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .glass-card,
+  .glass-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .glass-card:hover {
+    transform: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

@@ -1,6 +1,9 @@
 "use client";
 
 import { Lock, Volume2 } from "lucide-react";
+import { getDiscordPollIntervalMs } from "@/lib/client/device-perf";
+import { useInViewportPolling } from "@/lib/client/use-in-viewport-polling";
+import { useLightAnimations } from "@/lib/client/use-light-animations";
 import { useEffect, useMemo, useState } from "react";
 
 type VoiceUser = {
@@ -21,9 +24,14 @@ export function DiscordVoicePreview({ className = "" }: { className?: string }) 
   const [channels, setChannels] = useState<VoiceChannel[]>([]);
   const [loading, setLoading] = useState(true);
   const [trackerPending, setTrackerPending] = useState(false);
+  const light = useLightAnimations();
+  const sectionVisible = useInViewportPolling("discord");
+  const pollMs = getDiscordPollIntervalMs("voice", false);
   const MAX_CHANNEL_BLOCKS = 4;
 
   useEffect(() => {
+    if (!sectionVisible) return;
+
     let active = true;
 
     const fetchVoice = async () => {
@@ -41,14 +49,14 @@ export function DiscordVoicePreview({ className = "" }: { className?: string }) 
       }
     };
 
-    fetchVoice();
-    const intervalId = setInterval(fetchVoice, 5_000);
+    void fetchVoice();
+    const intervalId = window.setInterval(() => void fetchVoice(), pollMs);
 
     return () => {
       active = false;
-      clearInterval(intervalId);
+      window.clearInterval(intervalId);
     };
-  }, []);
+  }, [pollMs, sectionVisible, light]);
 
   const visibleChannels = useMemo(
     () => channels.slice(0, MAX_CHANNEL_BLOCKS),

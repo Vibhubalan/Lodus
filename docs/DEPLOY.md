@@ -172,6 +172,28 @@ When `S3_BUCKET` and `S3_ACCESS_KEY_ID` are set, avatars upload to S3/R2. Otherw
 
 On Vercel/Render, local disk is not persistent — use S3/R2 for production avatar uploads.
 
+Set `S3_PUBLIC_URL` in Vercel so `next.config.ts` can allow Next.js image optimization for roster avatars on that host (smaller downloads on mobile).
+
+---
+
+## Mobile performance
+
+The public homepage automatically uses **light animations** on phones and touch devices (coarse pointer / max-width 768px) and when the user has **prefers-reduced-motion**. Desktop keeps blur scroll reveals, glass `backdrop-filter`, and deck card rotation.
+
+| Behavior | Desktop | Mobile / light mode |
+|----------|---------|---------------------|
+| Scroll reveal blur | On | Off (faster fade) |
+| Deck card rotation | Every ~10s | Static slots |
+| Mouse glow | On | Off |
+| Discord chat poll (public) | 30s | 60s (only while `#discord` is visible) |
+| Discord voice poll | 5s | 20s (only while visible) |
+
+**After deploy:** hard refresh or use incognito on your phone before judging scroll/tap feel.
+
+**Optional test flag (Vercel):** `NEXT_PUBLIC_FORCE_LIGHT_ANIMATIONS=true` forces light mode on all viewports. Remove after verifying, then redeploy.
+
+**Smoke test:** scroll homepage on phone (no stutter); tap nav/admin (~100ms); member cards static; Discord loads when you scroll to it. On desktop, confirm blur scroll and deck rotation still run.
+
 ---
 
 ## Troubleshooting

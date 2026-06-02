@@ -2,6 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isInViewport, listenBfcacheRestore } from "@/lib/client/navigation-visibility";
+import { useLightAnimations } from "@/lib/client/use-light-animations";
 
 interface ScrollRevealProps {
   children: React.ReactNode;
@@ -23,8 +24,12 @@ export function ScrollReveal({
   direction = "up",
   once = false,
 }: ScrollRevealProps) {
+  const light = useLightAnimations();
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const effectiveOnce = light ? true : once;
+  const effectiveDuration = light ? Math.min(duration, 350) : duration;
+  const useBlur = !light;
 
   const revealIfInView = () => {
     const el = ref.current;
@@ -47,8 +52,8 @@ export function ScrollReveal({
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
-          if (once) observer.unobserve(el);
-        } else if (!once) {
+          if (effectiveOnce) observer.unobserve(el);
+        } else if (!effectiveOnce) {
           setVisible(false);
         }
       },
@@ -60,7 +65,7 @@ export function ScrollReveal({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [once]);
+  }, [effectiveOnce]);
 
   const hiddenTransform = () => {
     switch (direction) {
@@ -78,14 +83,20 @@ export function ScrollReveal({
   return (
     <div
       ref={ref}
-      className={`scroll-reveal ${className}`}
+      className={`scroll-reveal ${light ? "scroll-reveal--light" : ""} ${className}`}
       data-visible={visible}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translate3d(0, 0, 0) scale(1)" : `${hiddenTransform()} scale(0.98)`,
-        filter: visible ? "blur(0px)" : "blur(6px)",
-        transition: `opacity ${duration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, transform ${duration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, filter ${duration * 0.85}ms ease-out ${delay}ms`,
-        willChange: "opacity, transform, filter",
+        ...(useBlur
+          ? {
+              filter: visible ? "blur(0px)" : "blur(6px)",
+            }
+          : {}),
+        transition: useBlur
+          ? `opacity ${effectiveDuration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, transform ${effectiveDuration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, filter ${effectiveDuration * 0.85}ms ease-out ${delay}ms`
+          : `opacity ${effectiveDuration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, transform ${effectiveDuration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
+        willChange: useBlur ? "opacity, transform, filter" : "opacity, transform",
       }}
     >
       {children}

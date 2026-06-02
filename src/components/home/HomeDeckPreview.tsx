@@ -8,6 +8,7 @@ import {
   pickRotatingSlots,
   pickStableSlots,
 } from "@/lib/members/pick-rotating-roster";
+import { useLightAnimations } from "@/lib/client/use-light-animations";
 import type { RosterMember, RosterViewerMode } from "@/lib/members/roster-types";
 
 const ROTATE_MS = 10_000;
@@ -38,7 +39,8 @@ export function HomeDeckPreview({
   canDeleteMembers: _canDeleteMembers,
 }: HomeDeckPreviewProps) {
   const router = useRouter();
-  const shouldRotate = pool.length > HOME_DECK_SLOT_COUNT;
+  const light = useLightAnimations();
+  const shouldRotate = pool.length > HOME_DECK_SLOT_COUNT && !light;
   const reduceMotionRef = useRef(false);
   const [rotationReady, setRotationReady] = useState(false);
   const [slots, setSlots] = useState(() => pickStableSlots(pool));
@@ -51,14 +53,14 @@ export function HomeDeckPreview({
     shouldRotate && rotationReady ? slots : pickStableSlots(pool);
 
   useEffect(() => {
-    reduceMotionRef.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    reduceMotionRef.current =
+      light ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setRotationReady(true);
     if (shouldRotate && !reduceMotionRef.current) {
       setSlots(pickRotatingSlots(pool));
     }
-  }, [pool, shouldRotate]);
+  }, [pool, shouldRotate, light]);
 
   useEffect(() => {
     setSlots(pickStableSlots(pool));

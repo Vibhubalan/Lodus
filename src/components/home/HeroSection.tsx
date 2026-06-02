@@ -1,13 +1,16 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { useLightAnimations } from "@/lib/client/use-light-animations";
 
 export function HeroSection({ tagline }: { tagline: string }) {
+  const light = useLightAnimations();
+
   const scrollToTeam = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const target = document.getElementById("team");
     if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.scrollIntoView({ behavior: light ? "auto" : "smooth", block: "start" });
     window.history.replaceState(null, "", "#team");
   };
 

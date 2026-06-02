@@ -24,7 +24,6 @@ export function HomeDeckCard({
           fill
           className="object-cover object-center"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
-          unoptimized={person.photoUrl.startsWith("http")}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0507]/95 via-[#0a0507]/25 to-transparent" />
       </div>

@@ -1,11 +1,16 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useLightAnimations } from "@/lib/client/use-light-animations";
 import { MouseGlow } from "./MouseGlow";
 
 /** Shared crimson atmospheric background for public + member home views. */
 export function SiteBackgroundShell({ children }: { children: ReactNode }) {
+  const light = useLightAnimations();
+
   return (
     <div className="site-body relative min-h-screen text-on-surface">
-      <MouseGlow />
+      {!light ? <MouseGlow /> : null}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[60vh] opacity-80"
         aria-hidden

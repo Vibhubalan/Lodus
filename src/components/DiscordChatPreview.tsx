@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { getDiscordPollIntervalMs } from "@/lib/client/device-perf";
+import { useInViewportPolling } from "@/lib/client/use-in-viewport-polling";
+import { useLightAnimations } from "@/lib/client/use-light-animations";
 import { isMemberAuthEnabled } from "@/lib/features";
 
 type ChatMessage = {
@@ -53,7 +56,9 @@ export function DiscordChatPreview({
   const paneRef = useRef<HTMLDivElement>(null);
 
   const canSend = interactive && !!session?.user && isDiscordLinked;
-  const pollMs = interactive ? 5000 : 30_000;
+  const light = useLightAnimations();
+  const sectionVisible = useInViewportPolling("discord");
+  const pollMs = getDiscordPollIntervalMs("chat", interactive);
 
   useEffect(() => {
     const el = paneRef.current;
@@ -77,6 +82,8 @@ export function DiscordChatPreview({
   }, [interactive]);
 
   useEffect(() => {
+    if (!sectionVisible) return;
+
     let active = true;
 
     const fetchMessages = async () => {
@@ -95,14 +102,14 @@ export function DiscordChatPreview({
       }
     };
 
-    fetchMessages();
-    const intervalId = setInterval(fetchMessages, pollMs);
+    void fetchMessages();
+    const intervalId = window.setInterval(() => void fetchMessages(), pollMs);
 
     return () => {
       active = false;
-      clearInterval(intervalId);
+      window.clearInterval(intervalId);
     };
-  }, [pollMs]);
+  }, [pollMs, sectionVisible, light]);
 
   useEffect(() => {
     if (!interactive) return;
