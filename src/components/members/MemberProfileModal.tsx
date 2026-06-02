@@ -56,6 +56,7 @@ export function MemberProfileModal({
   const [bio, setBio] = useState(member.bio ?? "");
   const [designation, setDesignation] = useState(member.description ?? "");
   const [avatarUrl, setAvatarUrl] = useState(member.photoUrl ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [authRoleSlug, setAuthRoleSlug] = useState(member.roleSlug ?? "member");
   const [rosterRole, setRosterRole] = useState(member.rosterRole ?? "member");
   const [selectedSkills, setSelectedSkills] = useState<MemberSkills>({
@@ -84,6 +85,7 @@ export function MemberProfileModal({
     phone !== (member.phone ?? "") ||
     bio !== (member.bio ?? "") ||
     designation !== (member.description ?? "") ||
+    avatarFile !== null ||
     avatarUrl !== (member.photoUrl ?? "") ||
     authRoleSlug !== (member.roleSlug ?? "member") ||
     rosterRole !== (member.rosterRole ?? "member") ||
@@ -98,6 +100,7 @@ export function MemberProfileModal({
     setBio(member.bio ?? "");
     setDesignation(member.description ?? "");
     setAvatarUrl(member.photoUrl ?? "");
+    setAvatarFile(null);
     setAuthRoleSlug(member.roleSlug ?? "member");
     setRosterRole(member.rosterRole ?? "member");
     setSelectedSkills({
@@ -171,6 +174,7 @@ export function MemberProfileModal({
     formData.set("bio", bio);
     formData.set("designation", designation);
     formData.set("avatarUrl", avatarUrl);
+    if (avatarFile) formData.set("avatar", avatarFile);
     formData.set("authRoleSlug", authRoleSlug);
     formData.set("rosterRole", rosterRole);
     formData.set("skills", JSON.stringify(selectedSkills));
@@ -440,6 +444,18 @@ export function MemberProfileModal({
                       <option value="owner" className="bg-[#0b0e14]">Owner</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                    Re-upload photo
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={(e) => setAvatarFile(e.currentTarget.files?.[0] ?? null)}
+                    className="block w-full text-xs text-on-surface-variant file:mr-3 file:rounded file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary"
+                  />
                 </div>
 
                 <div className="space-y-1">

@@ -51,7 +51,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
     subtitle: "{{count}} members in the group",
     overlayTitle: "All Members",
     hidden: false,
-    mode: "all",
+    mode: "featured",
   },
   discord: {
     title: "Community",
@@ -133,10 +133,8 @@ export function applyHomepageOverrides(pool: RosterMember[], config: HomepageCon
 
 export function resolveTeamPool(
   fullRoster: RosterMember[],
-  config: HomepageConfig,
+  _config: HomepageConfig,
 ): RosterMember[] {
-  if (config.team.mode === "all") return fullRoster;
-  const featured = fullRoster.filter((m) => m.showInTeam);
-  if (featured.length > 0) return featured;
-  return fullRoster;
+  // Lower Lodus should be independently controlled by the Team toggle.
+  return fullRoster.filter((m) => m.showInTeam);
 }

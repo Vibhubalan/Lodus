@@ -135,7 +135,24 @@ export async function adminUpdateMemberProfileFull(formData: FormData): Promise<
   
   const skillsJson = formData.get("skills") as string;
   const gamesJson = formData.get("games") as string;
-  const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+  let avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+  const avatarFile = formData.get("avatar");
+
+  if (avatarFile instanceof File && avatarFile.size > 0) {
+    try {
+      avatarUrl = await saveImage(avatarFile, "uploads/avatars", email.split("@")[0] ?? "member");
+    } catch (err) {
+      if (isUploadStorageUnavailableError(err)) {
+        return {
+          ok: false,
+          error:
+            "Image uploads need S3/R2 on this host. Configure storage env vars or use Avatar Image URL.",
+        };
+      }
+      const message = err instanceof Error ? err.message : "Avatar upload failed.";
+      return { ok: false, error: message };
+    }
+  }
 
   if (!userId || !name || !email) {
     return { ok: false, error: "Display name and email are required." };
