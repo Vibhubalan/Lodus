@@ -9,6 +9,11 @@ import {
   siteContent,
   users,
   roles,
+  marketplaceCategories,
+  marketplaceListings,
+  marketplaceImages,
+  marketplaceWishlist,
+  marketplaceReviews,
 } from "../lib/db/schema";
 
 const SYSTEM_ROLES = [
@@ -53,12 +58,27 @@ const SYSTEM_ROLES = [
 async function seed() {
   console.log("Seeding database...");
 
+  await db.delete(marketplaceReviews);
+  await db.delete(marketplaceWishlist);
+  await db.delete(marketplaceImages);
+  await db.delete(marketplaceListings);
+  await db.delete(marketplaceCategories);
   await db.delete(users);
   await db.delete(memberGames);
   await db.delete(resources);
   await db.delete(games);
   await db.delete(members);
   await db.delete(siteContent);
+
+  const DEFAULT_CATEGORIES = [
+    { name: "Gaming Gear", slug: "gaming-gear", description: "Consoles, PCs, components, and controllers." },
+    { name: "Services", slug: "services", description: "Design, editing, coding, and setup assistance." },
+    { name: "Coaching", slug: "coaching", description: "Ranked coaching, VOD reviews, and gameplay analysis." },
+    { name: "Merchandise", slug: "merchandise", description: "Apparel, stickers, and custom group items." },
+    { name: "Other", slug: "other", description: "Miscellaneous items and other listings." },
+  ];
+
+  await db.insert(marketplaceCategories).values(DEFAULT_CATEGORIES);
 
   for (const role of SYSTEM_ROLES) {
     await db.insert(roles).values({ ...role }).onConflictDoNothing();

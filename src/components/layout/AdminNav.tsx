@@ -40,12 +40,14 @@ export async function AdminNav({
   const links = minimalHub && isAdmin
     ? [
         { id: "members", href: "/?tab=members", label: "Members" },
+        { id: "marketplace", href: "/marketplace", label: "Marketplace" },
         { id: "site", href: "/?tab=site", label: "Site Settings" },
       ]
     : isAdmin
       ? [
           ...(approvalsLink ? [approvalsLink] : []),
           { id: "members", href: "/?tab=members", label: "Members" },
+          { id: "marketplace", href: "/marketplace", label: "Marketplace" },
           { id: "roles", href: "/?tab=roles", label: "Role Management" },
           { id: "audit", href: "/?tab=audit", label: "Audit Logs" },
           { id: "site", href: "/?tab=site", label: "Site Settings" },
@@ -54,6 +56,7 @@ export async function AdminNav({
           ...(approvalsLink ? [approvalsLink] : []),
           { id: "social", href: "/?tab=social", label: "Social" },
           { id: "members", href: "/?tab=members", label: "Members" },
+          { id: "marketplace", href: "/marketplace", label: "Marketplace" },
           { id: "broadcast", href: "/?tab=broadcast", label: "Broadcast" },
           { id: "leaderboard", href: "/?tab=leaderboard", label: "Leaderboard" },
         ];

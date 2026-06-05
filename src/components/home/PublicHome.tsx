@@ -5,6 +5,7 @@ import { FoundedSection } from "@/components/home/FoundedSection";
 import { HeroSection } from "@/components/home/HeroSection";
 import { LeadershipGrid } from "@/components/home/LeadershipGrid";
 import { MembersTeamPreview } from "@/components/home/MembersTeamPreview";
+import { ServicesSection, type MarketplaceListingPreview } from "@/components/home/ServicesSection";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { ScrollReveal } from "@/components/layout/ScrollReveal";
 import type { HomepageConfig } from "@/lib/site/homepage-config";
@@ -26,6 +27,7 @@ export function PublicHome({
   homepage,
   canEditRoster = false,
   canDeleteMembers = false,
+  recentListings = [],
 }: {
   tagline: string;
   foundedHistory: string;
@@ -41,6 +43,7 @@ export function PublicHome({
   homepage: HomepageConfig;
   canEditRoster?: boolean;
   canDeleteMembers?: boolean;
+  recentListings?: MarketplaceListingPreview[];
 }) {
   const teamPool = fullRoster.length > 0 ? fullRoster : roster;
   const teamSubtitle = interpolateHomepageText(homepage.team.subtitle, {
@@ -67,6 +70,10 @@ export function PublicHome({
               foundedLabel={foundedLabel}
               history={foundedHistory}
             />
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" distance={48} duration={900} delay={100}>
+            <ServicesSection recentListings={recentListings} />
           </ScrollReveal>
 
           {!homepage.discord.hidden ? (

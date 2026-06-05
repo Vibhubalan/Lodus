@@ -36,8 +36,14 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { db } from "@/lib/db";
-import { roles } from "@/lib/db/schema";
-import { asc } from "drizzle-orm";
+import {
+  roles,
+  users,
+  marketplaceListings,
+  marketplaceCategories,
+  marketplaceImages,
+} from "@/lib/db/schema";
+import { asc, desc, eq } from "drizzle-orm";
 
 export const revalidate = 0;
 
@@ -68,6 +74,42 @@ export default async function HomePage({
   const aboutImageUrl = site?.aboutImageUrl ?? "/images/about/lodus-photo.png";
   const aboutMarkdown = site?.aboutMarkdown ?? "";
   const highlightsJson = site?.highlightsJson ?? "[]";
+
+  const recentListingsRaw = await db
+    .select({
+      id: marketplaceListings.id,
+      title: marketplaceListings.title,
+      price: marketplaceListings.price,
+      categoryName: marketplaceCategories.name,
+      sellerName: users.name,
+      sellerEmail: users.email,
+      sellerAvatar: users.avatarUrl,
+    })
+    .from(marketplaceListings)
+    .innerJoin(marketplaceCategories, eq(marketplaceCategories.id, marketplaceListings.categoryId))
+    .innerJoin(users, eq(users.id, marketplaceListings.sellerId))
+    .orderBy(desc(marketplaceListings.createdAt))
+    .limit(3);
+
+  const recentListings = await Promise.all(
+    recentListingsRaw.map(async (listing) => {
+      const firstImg = await db
+        .select({ url: marketplaceImages.url })
+        .from(marketplaceImages)
+        .where(eq(marketplaceImages.listingId, listing.id))
+        .orderBy(asc(marketplaceImages.sortOrder))
+        .limit(1);
+      return {
+        id: listing.id,
+        title: listing.title,
+        price: listing.price,
+        categoryName: listing.categoryName,
+        sellerName: listing.sellerName ?? listing.sellerEmail.split("@")[0],
+        sellerAvatar: listing.sellerAvatar,
+        imageUrl: firstImg[0]?.url ?? null,
+      };
+    })
+  );
 
   let leadershipPool = fullRoster.filter((m) => m.showInLeadership);
   if (leadershipPool.length === 0) {
@@ -138,6 +180,7 @@ export default async function HomePage({
                 homepage={homepage}
                 canEditRoster={canEditRoster}
                 canDeleteMembers={canDelete}
+                recentListings={recentListings}
               />
             }
             panels={{
@@ -197,6 +240,7 @@ export default async function HomePage({
         aboutMarkdown={aboutMarkdown}
         highlightsJson={highlightsJson}
         homepage={homepage}
+        recentListings={recentListings}
       />
     </SiteBackgroundShell>
   );
