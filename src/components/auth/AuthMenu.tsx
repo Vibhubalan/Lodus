@@ -62,14 +62,16 @@ export function AuthMenu({ session }: { session: Session | null }) {
             <p className="truncate px-3 py-2 text-xs text-on-surface-variant">
               {session.user.email}
             </p>
-            <Link
-              href="/profile"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-on-surface transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              <UserPen className="h-4 w-4" />
-              Edit profile
-            </Link>
+            {!session.user.isMainAdmin && (
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-on-surface transition-colors hover:bg-primary/10 hover:text-primary"
+              >
+                <UserPen className="h-4 w-4" />
+                Edit profile
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/" })}

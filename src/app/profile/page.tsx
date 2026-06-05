@@ -1,7 +1,7 @@
 import { AdminNav } from "@/components/layout/AdminNav";
 import { ProfileSettings, type ProfileData } from "@/components/profile/ProfileSettings";
 import { auth } from "@/lib/auth";
-import { canEditMemberNickname } from "@/lib/auth/staff";
+import { canEditMemberNickname, isAdminEmail } from "@/lib/auth/staff";
 import { db } from "@/lib/db";
 import { members, roles, users } from "@/lib/db/schema";
 import { parseMemberSkills } from "@/lib/members/skill-catalog";
@@ -20,6 +20,9 @@ export default async function ProfilePage({
   }
 
   const email = session.user.email.toLowerCase();
+  if (isAdminEmail(email)) {
+    redirect("/");
+  }
   const userRows = await db
     .select({
       user: users,

@@ -7,6 +7,7 @@ declare module "next-auth" {
       roleSlug?: string;
       status?: string;
       needsProfile?: boolean;
+      isMainAdmin?: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -16,5 +17,7 @@ declare module "next-auth/jwt" {
     roleSlug?: string;
     status?: string;
     needsProfile?: boolean;
+    isMainAdmin?: boolean;
   }
 }
+

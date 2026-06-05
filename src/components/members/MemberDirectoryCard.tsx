@@ -1,7 +1,6 @@
 "use client";
 
 import { SafeDisplayImage } from "@/components/ui/SafeDisplayImage";
-import { Crown } from "lucide-react";
 import { StatusBadge } from "@/components/members/StatusBadge";
 import { rosterCardBadge } from "@/lib/members/roster-display";
 import type { RosterMember, RosterViewerMode } from "@/lib/members/roster-types";
@@ -30,15 +29,11 @@ export function MemberDirectoryCard({
   member,
   onSelect,
   isSmall = false,
-  isAdmin = false,
-  onToggleDeck,
   viewerMode = "member",
 }: {
   member: RosterMember;
   onSelect: (id: string) => void;
   isSmall?: boolean;
-  isAdmin?: boolean;
-  onToggleDeck?: (value: boolean) => void;
   viewerMode?: RosterViewerMode;
 }) {
   const isPublicView = viewerMode === "public";
@@ -68,30 +63,6 @@ export function MemberDirectoryCard({
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(member.id); }}}
       className={`group relative flex h-full ${cardHeightClass} w-full flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0d1118]/92 text-left shadow-lg transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_28px_rgba(255,70,85,0.12)] focus:outline-none focus-visible:outline-none cursor-pointer`}
     >
-      {isAdmin && onToggleDeck && (
-        <div
-          className="absolute right-3 top-3 z-20"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            onClick={() => onToggleDeck(!member.showInLeadership)}
-            className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all shadow-md cursor-pointer ${
-              member.showInLeadership
-                ? "bg-amber-500 border-amber-600 text-[#0a0507]"
-                : "bg-black/50 border-white/20 text-on-surface-variant hover:text-white"
-            }`}
-            title={member.showInLeadership ? "Remove from Leaders" : "Add to Leaders deck"}
-          >
-            <div className="relative">
-              <Crown className="h-4 w-4" />
-              <span className="absolute -right-1 -top-1 rounded-full bg-black/60 px-[2px] text-[7px] font-black leading-none text-white">
-                {member.showInLeadership ? "-" : "+"}
-              </span>
-            </div>
-          </button>
-        </div>
-      )}
 
 
       <div className={`relative ${imgHeightClass} flex-1 overflow-hidden`}>

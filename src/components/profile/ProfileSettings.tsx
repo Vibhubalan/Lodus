@@ -157,7 +157,13 @@ export function ProfileSettings({
   // Modal edit fields
   const [tempName, setTempName] = useState(profile.name ?? "");
   const [tempNickname, setTempNickname] = useState(profile.nickname ?? "");
-  const [tempPhone, setTempPhone] = useState(profile.phone ?? "");
+  const [tempPhone, setTempPhone] = useState(
+    profile.phone?.startsWith("+91")
+      ? profile.phone
+      : profile.phone
+        ? "+91" + profile.phone.replace(/[^\d]/g, "")
+        : "+91"
+  );
   const [tempInstagram, setTempInstagram] = useState(profile.instagram ?? "");
   const [tempLinkedin, setTempLinkedin] = useState(profile.linkedin ? profile.linkedin : "https://www.linkedin.com/in/");
   
@@ -296,7 +302,12 @@ export function ProfileSettings({
 
     const fd = new FormData();
     fd.append("name", fieldName === "name" ? finalValue : (profile.name ?? ""));
-    fd.append("phone", fieldName === "phone" ? finalValue : (profile.phone ?? ""));
+    
+    let phoneVal = fieldName === "phone" ? finalValue : (profile.phone ?? "");
+    if (phoneVal === "+91") {
+      phoneVal = "";
+    }
+    fd.append("phone", phoneVal);
     fd.append("discord", discordHandle ?? "");
     fd.append("instagram", fieldName === "instagram" ? finalValue : (profile.instagram ?? ""));
     fd.append("linkedin", fieldName === "linkedin" ? finalValue : (profile.linkedin ?? ""));
@@ -553,7 +564,13 @@ export function ProfileSettings({
                       <button
                         type="button"
                         onClick={() => {
-                          setTempPhone(profile.phone ?? "");
+                          setTempPhone(
+                            profile.phone?.startsWith("+91")
+                              ? profile.phone
+                              : profile.phone
+                                ? "+91" + profile.phone.replace(/[^\d]/g, "")
+                                : "+91"
+                          );
                           setActiveModal("phone");
                         }}
                         className="rounded bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-semibold text-on-surface hover:bg-white/10 hover:border-white/20 transition-all"
@@ -943,9 +960,26 @@ export function ProfileSettings({
                     <input
                       type="tel"
                       value={tempPhone}
-                      onChange={(e) => setTempPhone(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        let input = val;
+                        if (!input.startsWith("+91")) {
+                          if (input.startsWith("+9") || input.startsWith("+") || input === "") {
+                            setTempPhone("+91");
+                            return;
+                          }
+                          const digitsOnly = input.replace(/[^\d]/g, "");
+                          if (digitsOnly.startsWith("91")) {
+                            input = "+" + digitsOnly;
+                          } else {
+                            input = "+91" + digitsOnly;
+                          }
+                        }
+                        const prefix = "+91";
+                        const rest = input.slice(3).replace(/[^\d]/g, "");
+                        setTempPhone(prefix + rest);
+                      }}
                       placeholder="+91 98765 43210"
-                      required
                       className="w-full rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
