@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Star, Heart, Trash2, Edit, ArrowLeft, ShoppingBag } from "lucide-react";
@@ -31,6 +31,7 @@ interface ListingDetails {
   sellerAvatar: string | null;
   sellerEmail: string;
   categoryName: string;
+  status: string;
 }
 
 interface MarketplaceDetailsClientProps {
@@ -42,6 +43,7 @@ interface MarketplaceDetailsClientProps {
   isOwner: boolean;
   isLoggedIn: boolean;
   currentUserId: number | null;
+  sellerDiscord: string | null;
 }
 
 export function MarketplaceDetailsClient({
@@ -53,11 +55,19 @@ export function MarketplaceDetailsClient({
   isOwner,
   isLoggedIn,
   currentUserId,
+  sellerDiscord,
 }: MarketplaceDetailsClientProps) {
   const router = useRouter();
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(initialWishlisted);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  // Status and Cart states
+  const [status, setStatus] = useState(listing.status);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [inCart, setInCart] = useState(false);
+  const [cartSuccess, setCartSuccess] = useState(false);
 
   // Review states
   const [localReviews, setLocalReviews] = useState<Review[]>(reviews);
@@ -71,6 +81,21 @@ export function MarketplaceDetailsClient({
   // Deletion states
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  // Check if item is already in user's cart
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetch("/api/marketplace/cart")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.items) {
+            const found = data.items.some((item: any) => item.listingId === listing.id);
+            setInCart(found);
+          }
+        })
+        .catch((err) => console.error("Error fetching cart for detail check:", err));
+    }
+  }, [isLoggedIn, listing.id]);
 
   const toggleWishlist = async () => {
     if (!isLoggedIn) {
@@ -92,6 +117,58 @@ export function MarketplaceDetailsClient({
       console.error("Failed to toggle wishlist:", err);
     } finally {
       setWishlistLoading(false);
+    }
+  };
+
+  const toggleSoldStatus = async () => {
+    setStatusLoading(true);
+    const newStatus = status === "sold" ? "active" : "sold";
+    try {
+      const res = await fetch(`/api/marketplace/${listing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setStatus(newStatus);
+        router.refresh();
+      } else {
+        const data = await res.json();
+        alert(data.error ?? "Failed to update status.");
+      }
+    } catch (err) {
+      alert("Failed to update status.");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const addToCart = async () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+    setCartLoading(true);
+    try {
+      const res = await fetch("/api/marketplace/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: listing.id }),
+      });
+      if (res.ok) {
+        setInCart(true);
+        setCartSuccess(true);
+        // Trigger cart count badge updates
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+        setTimeout(() => setCartSuccess(false), 3000);
+      } else {
+        const data = await res.json();
+        alert(data.error ?? "Failed to add to cart.");
+      }
+    } catch (err) {
+      alert("Failed to add to cart.");
+    } finally {
+      setCartLoading(false);
     }
   };
 
@@ -195,7 +272,7 @@ export function MarketplaceDetailsClient({
       </div>
 
       <div className="grid gap-8 lg:grid-cols-12">
-        {/* Left column: Image Gallery (5 cols) */}
+        {/* Left column: Image Gallery (6 cols) */}
         <div className="lg:col-span-6 space-y-4">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-outline-variant bg-white/5">
             {images.length > 0 && images[activeImageIdx] ? (
@@ -211,6 +288,13 @@ export function MarketplaceDetailsClient({
               </div>
             )}
             
+            {/* SOLD status banner */}
+            {status === "sold" && (
+              <div className="absolute top-4 left-4 z-10 bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest text-on-primary rounded shadow-lg">
+                Sold
+              </div>
+            )}
+
             {/* Wishlist/Heart float */}
             {!isOwner && (
               <button
@@ -247,7 +331,7 @@ export function MarketplaceDetailsClient({
           )}
         </div>
 
-        {/* Right column: Details and Actions (7 cols) */}
+        {/* Right column: Details and Actions (6 cols) */}
         <div className="lg:col-span-6 space-y-6">
           <div className="space-y-3">
             <span className="inline-block rounded-md bg-white/5 border border-outline-variant px-2.5 py-1 text-xs font-bold text-primary uppercase tracking-widest">
@@ -258,6 +342,45 @@ export function MarketplaceDetailsClient({
             </h1>
             <div className="text-3xl font-black text-primary">₹{listing.price}</div>
           </div>
+
+          {/* Add to Cart & Contact Buttons */}
+          {!isOwner && (
+            <div className="flex flex-col gap-3">
+              {status === "sold" ? (
+                <button
+                  disabled
+                  className="w-full rounded-lg bg-white/5 border border-outline-variant py-3.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant/40 cursor-not-allowed text-center"
+                >
+                  This Item is Sold
+                </button>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={addToCart}
+                    disabled={cartLoading || inCart}
+                    className={`flex-1 rounded-lg py-3.5 text-xs font-bold uppercase tracking-widest transition-all shadow-md text-center ${
+                      inCart
+                        ? "bg-white/5 border border-outline-variant text-on-surface-variant/70 cursor-default"
+                        : "bg-primary text-on-primary hover:brightness-110 disabled:opacity-50"
+                    }`}
+                  >
+                    {cartLoading ? "Adding..." : inCart ? "Added to Cart" : "Add to Cart"}
+                  </button>
+                  <a
+                    href={`mailto:${listing.sellerEmail}?subject=Inquiry about your listing: ${encodeURIComponent(listing.title)}`}
+                    className="flex-1 rounded-lg bg-white/5 border border-outline-variant py-3.5 text-xs font-bold uppercase tracking-widest text-on-surface hover:bg-white/10 transition-colors shadow-md text-center flex items-center justify-center gap-1.5"
+                  >
+                    Contact Seller
+                  </a>
+                </div>
+              )}
+              {cartSuccess && (
+                <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest text-center">
+                  Item added to your shopping cart!
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Owner options */}
           {isOwner && (
@@ -273,6 +396,18 @@ export function MarketplaceDetailsClient({
                   <Edit className="h-3.5 w-3.5" />
                   Edit
                 </Link>
+                <button
+                  type="button"
+                  onClick={toggleSoldStatus}
+                  disabled={statusLoading}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors ${
+                    status === "sold"
+                      ? "border-green-500/20 bg-green-500/10 text-green-400 hover:bg-green-500/20"
+                      : "border-primary/20 bg-primary/10 text-primary hover:bg-primary/20"
+                  }`}
+                >
+                  {status === "sold" ? "Mark as Active" : "Mark as Sold"}
+                </button>
                 {showConfirmDelete ? (
                   <div className="flex gap-1.5">
                     <button
@@ -338,10 +473,22 @@ export function MarketplaceDetailsClient({
                       ({localAvgRating || "No reviews"})
                     </span>
                   </div>
+
+                  {/* Seller Contact & Discord details */}
+                  <div className="mt-2.5 space-y-1">
+                    <span className="text-[11px] text-on-surface-variant/80 block select-all">
+                      📧 {listing.sellerEmail}
+                    </span>
+                    {sellerDiscord && (
+                      <span className="text-[11px] text-on-surface-variant/80 block select-all">
+                        🎮 Discord: {sellerDiscord}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="text-right">
+              <div className="text-right self-start">
                 <span className="text-[10px] text-on-surface-variant/60 block">Listed on</span>
                 <span className="text-xs font-bold text-on-surface">
                   {new Date(listing.createdAt).toLocaleDateString()}

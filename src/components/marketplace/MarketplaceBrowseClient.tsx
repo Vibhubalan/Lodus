@@ -19,6 +19,7 @@ interface Listing {
   sellerEmail: string;
   sellerAvatar: string | null;
   imageUrl: string | null;
+  status: string;
 }
 
 interface MarketplaceBrowseClientProps {
@@ -187,7 +188,9 @@ export function MarketplaceBrowseClient({
                 <Link
                   key={item.id}
                   href={`/marketplace/${item.id}`}
-                  className="glass-card group overflow-hidden rounded-xl flex flex-col h-full hover:border-primary/30"
+                  className={`glass-card group overflow-hidden rounded-xl flex flex-col h-full hover:border-primary/30 transition-all ${
+                    item.status === "sold" ? "opacity-60 hover:opacity-85" : ""
+                  }`}
                 >
                   <div className="relative aspect-video w-full bg-white/5">
                     {item.imageUrl ? (
@@ -202,7 +205,12 @@ export function MarketplaceBrowseClient({
                         <ShoppingBag className="h-10 w-10 text-on-surface-variant/20" />
                       </div>
                     )}
-                    <span className="absolute top-3 right-3 rounded-lg bg-black/80 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
+                    {item.status === "sold" && (
+                      <span className="absolute top-3 left-3 rounded bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-on-primary z-10">
+                        Sold
+                      </span>
+                    )}
+                    <span className="absolute top-3 right-3 rounded-lg bg-black/80 px-2.5 py-1 text-xs font-bold text-primary shadow-sm z-10">
                       ₹{item.price}
                     </span>
                   </div>

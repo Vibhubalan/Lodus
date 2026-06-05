@@ -5,6 +5,7 @@ import { MembersDirectory } from "@/components/members/MembersDirectory";
 import { RoleManagementSection } from "@/components/admin/RoleManagementSection";
 import { AuditLogSection } from "@/components/admin/AuditLogSection";
 import { SiteSettingsSection } from "@/components/admin/SiteSettingsSection";
+import { MarketplaceModerationSection } from "@/components/admin/MarketplaceModerationSection";
 import { PublicHome } from "@/components/home/PublicHome";
 import { AdminNav } from "@/components/layout/AdminNav";
 import { MemberHubTabAnimator } from "@/components/layout/MemberHubTabAnimator";
@@ -130,7 +131,7 @@ export default async function HomePage({
     const minimalHub = isMinimalAdminHub();
     let activeTab = resolveActiveTab(tab, isAdmin, canApprove && !minimalHub);
     if (minimalHub) {
-      const allowed = isAdmin ? ["home", "members", "site"] : ["home", "members"];
+      const allowed = isAdmin ? ["home", "members", "listings", "site"] : ["home", "members"];
       if (!allowed.includes(activeTab)) {
         activeTab = "home";
       }
@@ -155,6 +156,22 @@ export default async function HomePage({
       isAdminEmail(email);
 
     const allRoles = await db.select().from(roles).orderBy(asc(roles.sortOrder));
+
+    const allListings = await db
+      .select({
+        id: marketplaceListings.id,
+        title: marketplaceListings.title,
+        price: marketplaceListings.price,
+        status: marketplaceListings.status,
+        createdAt: marketplaceListings.createdAt,
+        categoryName: marketplaceCategories.name,
+        sellerName: users.name,
+        sellerEmail: users.email,
+      })
+      .from(marketplaceListings)
+      .innerJoin(marketplaceCategories, eq(marketplaceCategories.id, marketplaceListings.categoryId))
+      .innerJoin(users, eq(users.id, marketplaceListings.sellerId))
+      .orderBy(desc(marketplaceListings.createdAt));
 
     return (
       <SiteBackgroundShell>
@@ -191,6 +208,9 @@ export default async function HomePage({
                       site: (
                         <SiteSettingsSection site={site} roster={memberRosterPreview} />
                       ),
+                      listings: (
+                        <MarketplaceModerationSection listings={allListings} />
+                      ),
                     }
                   : {}
                 : {
@@ -204,6 +224,9 @@ export default async function HomePage({
                           audit: <AuditLogSection />,
                           site: (
                             <SiteSettingsSection site={site} roster={memberRosterPreview} />
+                          ),
+                          listings: (
+                            <MarketplaceModerationSection listings={allListings} />
                           ),
                         }
                       : {}),

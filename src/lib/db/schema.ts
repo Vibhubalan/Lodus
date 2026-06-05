@@ -238,6 +238,9 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   sellerId: integer("seller_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  status: text("status", { enum: ["active", "sold", "inactive"] })
+    .notNull()
+    .default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -269,6 +272,23 @@ export const marketplaceWishlist = pgTable(
   ],
 );
 
+export const marketplaceCartItems = pgTable(
+  "marketplace_cart_items",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listingId: integer("listing_id")
+      .notNull()
+      .references(() => marketplaceListings.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("marketplace_cart_user_listing_idx").on(table.userId, table.listingId),
+  ],
+);
+
 export const marketplaceReviews = pgTable("marketplace_reviews", {
   id: serial("id").primaryKey(),
   sellerId: integer("seller_id")
@@ -297,4 +317,5 @@ export type MarketplaceCategory = typeof marketplaceCategories.$inferSelect;
 export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
 export type MarketplaceImage = typeof marketplaceImages.$inferSelect;
 export type MarketplaceWishlist = typeof marketplaceWishlist.$inferSelect;
+export type MarketplaceCartItem = typeof marketplaceCartItems.$inferSelect;
 export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;

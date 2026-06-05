@@ -7,6 +7,7 @@ export const HUB_TABS = new Set([
   "roles",
   "audit",
   "site",
+  "listings",
 ]);
 
 export type HubTabId =
@@ -18,7 +19,8 @@ export type HubTabId =
   | "approvals"
   | "roles"
   | "audit"
-  | "site";
+  | "site"
+  | "listings";
 
 export function resolveActiveTab(
   tab: string | null | undefined,
@@ -27,7 +29,7 @@ export function resolveActiveTab(
 ): HubTabId {
   if (!tab || tab === "home") return "home";
   if (tab === "approvals" && !canApprove) return "home";
-  if ((tab === "roles" || tab === "audit" || tab === "site") && !isAdmin) {
+  if ((tab === "roles" || tab === "audit" || tab === "site" || tab === "listings") && !isAdmin) {
     return "home";
   }
   if (!HUB_TABS.has(tab)) return "home";
@@ -40,7 +42,8 @@ export function hubMainWidthClass(tab: HubTabId) {
     tab === "approvals" ||
     tab === "roles" ||
     tab === "audit" ||
-    tab === "site"
+    tab === "site" ||
+    tab === "listings"
     ? "max-w-[1480px]"
     : "max-w-[960px]";
 }

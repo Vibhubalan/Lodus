@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { marketplaceListings, marketplaceImages, users } from "@/lib/db/schema";
+import { marketplaceListings, marketplaceImages, marketplaceCategories, users } from "@/lib/db/schema";
 import { saveImage } from "@/lib/uploads/save-image";
+import { notifyNewListing } from "@/lib/discord/notifications";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const userRecord = await db
-      .select({ id: users.id })
+      .select({ id: users.id, name: users.name, email: users.email })
       .from(users)
       .where(eq(users.email, session.user.email.toLowerCase()))
       .limit(1);
@@ -46,6 +47,14 @@ export async function POST(req: Request) {
     if (!sellerId) {
       return NextResponse.json({ error: "Seller profile not found." }, { status: 404 });
     }
+
+    // Fetch category name
+    const categoryRecord = await db
+      .select({ name: marketplaceCategories.name })
+      .from(marketplaceCategories)
+      .where(eq(marketplaceCategories.id, categoryId))
+      .limit(1);
+    const categoryName = categoryRecord[0]?.name ?? "Other";
 
     // Insert listing
     const listingInsert = await db
@@ -56,6 +65,7 @@ export async function POST(req: Request) {
         price,
         categoryId,
         sellerId,
+        status: "active",
       })
       .returning();
 
@@ -63,6 +73,7 @@ export async function POST(req: Request) {
 
     // Process and save uploaded images
     let sortOrder = 0;
+    const savedUrls: string[] = [];
     for (const file of imageFiles) {
       if (!file?.size || !file.name) continue;
       try {
@@ -72,11 +83,24 @@ export async function POST(req: Request) {
           url,
           sortOrder,
         });
+        savedUrls.push(url);
         sortOrder++;
       } catch (err: any) {
         console.error("Failed to upload listing image:", err.message);
       }
     }
+
+    // Trigger discord notification asynchronously
+    const sellerDisplayName = userRecord[0].name ?? userRecord[0].email.split("@")[0];
+    notifyNewListing({
+      id: listingId,
+      title: title.trim(),
+      price,
+      description: description.trim(),
+      categoryName,
+      sellerName: sellerDisplayName,
+      imageUrl: savedUrls[0] ?? null,
+    }).catch((err) => console.error("Discord notify async error:", err));
 
     return NextResponse.json({ id: listingId }, { status: 201 });
   } catch (err: any) {

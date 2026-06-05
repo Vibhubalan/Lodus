@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { AuthMenu } from "@/components/auth/AuthMenu";
+import { MarketplaceCartButton } from "@/components/marketplace/MarketplaceCartButton";
 import { NoCopyGuard } from "@/components/layout/NoCopyGuard";
 import { isMemberAuthEnabled } from "@/lib/features";
 
@@ -21,7 +22,8 @@ export async function PublicNav({ brandName = "Lodus" }: { brandName?: string })
             </Link>
           </div>
           {showAuth ? (
-            <div className="shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
+              {session?.user && <MarketplaceCartButton />}
               <AuthMenu session={session} />
             </div>
           ) : null}

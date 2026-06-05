@@ -79,6 +79,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
       sellerName: users.name,
       sellerEmail: users.email,
       sellerAvatar: users.avatarUrl,
+      status: marketplaceListings.status,
     })
     .from(marketplaceListings)
     .innerJoin(marketplaceCategories, eq(marketplaceCategories.id, marketplaceListings.categoryId))

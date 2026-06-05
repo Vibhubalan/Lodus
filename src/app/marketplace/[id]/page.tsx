@@ -8,6 +8,7 @@ import {
   marketplaceReviews,
   marketplaceWishlist,
   users,
+  members,
 } from "@/lib/db/schema";
 import { eq, and, avg } from "drizzle-orm";
 import { getSiteContent } from "@/lib/queries";
@@ -49,6 +50,7 @@ export default async function ListingDetailsPage({ params }: PageProps) {
       sellerAvatar: users.avatarUrl,
       sellerEmail: users.email,
       categoryName: marketplaceCategories.name,
+      status: marketplaceListings.status,
     })
     .from(marketplaceListings)
     .innerJoin(marketplaceCategories, eq(marketplaceCategories.id, marketplaceListings.categoryId))
@@ -60,6 +62,14 @@ export default async function ListingDetailsPage({ params }: PageProps) {
   if (!listing) {
     notFound();
   }
+
+  // Fetch seller Discord handle from members table
+  const sellerMemberRows = await db
+    .select({ discord: members.discord })
+    .from(members)
+    .where(eq(members.email, listing.sellerEmail))
+    .limit(1);
+  const sellerDiscord = sellerMemberRows[0]?.discord ?? null;
 
   // Fetch listing images
   const images = await db
@@ -159,6 +169,7 @@ export default async function ListingDetailsPage({ params }: PageProps) {
           isOwner={isOwner}
           isLoggedIn={!!session?.user}
           currentUserId={currentUserRecord?.id ?? null}
+          sellerDiscord={sellerDiscord}
         />
       </main>
 

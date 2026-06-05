@@ -20,6 +20,7 @@ const PANEL_ORDER = [
   "site",
   "roles",
   "audit",
+  "listings",
 ] as const;
 
 type HubPanelTab = (typeof PANEL_ORDER)[number];
