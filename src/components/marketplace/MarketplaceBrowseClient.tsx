@@ -72,33 +72,24 @@ export function MarketplaceBrowseClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {isLoggedIn ? (
-            <>
-              <Link
-                href="/marketplace/dashboard"
-                className="inline-flex items-center gap-2 rounded-lg border border-outline-variant bg-white/5 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface transition-all duration-300 hover:bg-white/10"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                My Dashboard
-              </Link>
-              <Link
-                href="/marketplace/new"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-on-primary shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110"
-              >
-                <Plus className="h-4 w-4" />
-                Create Listing
-              </Link>
-            </>
-          ) : (
+        {isLoggedIn && (
+          <div className="flex items-center gap-3">
             <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-on-primary shadow-md transition-all duration-300 hover:brightness-110"
+              href="/marketplace/dashboard"
+              className="inline-flex items-center gap-2 rounded-lg border border-outline-variant bg-white/5 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface transition-all duration-300 hover:bg-white/10"
             >
-              Sign In to Sell
+              <LayoutDashboard className="h-4 w-4" />
+              My Dashboard
             </Link>
-          )}
-        </div>
+            <Link
+              href="/marketplace/new"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-on-primary shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110"
+            >
+              <Plus className="h-4 w-4" />
+              Create Listing
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
