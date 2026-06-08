@@ -60,7 +60,13 @@ export function MemberProfileModal({
   const [name, setName] = useState(initialName);
   const [nickname, setNickname] = useState(member.nickname ?? "");
   const [email, setEmail] = useState(member.email ?? "");
-  const [phone, setPhone] = useState(member.phone ?? "");
+  const [phone, setPhone] = useState(
+    member.phone?.startsWith("+91")
+      ? member.phone
+      : member.phone
+        ? "+91" + member.phone.replace(/[^\d]/g, "")
+        : "+91"
+  );
   const [bio, setBio] = useState(member.bio ?? "");
   const [designation, setDesignation] = useState(member.description ?? "");
   const [avatarUrl, setAvatarUrl] = useState(member.photoUrl ?? "");
@@ -89,11 +95,13 @@ export function MemberProfileModal({
     member.age ?? (member.birthdate ? computeAgeFromBirthdate(member.birthdate) : null);
   const ageLabel = formatMemberAge(displayAge);
 
+  const normalizedPhone = phone === "+91" ? "" : phone;
+  const dbPhone = member.phone ?? "";
   const isDirty = 
     name !== initialName ||
     nickname !== (member.nickname ?? "") ||
     email !== (member.email ?? "") ||
-    phone !== (member.phone ?? "") ||
+    normalizedPhone !== dbPhone ||
     bio !== (member.bio ?? "") ||
     designation !== (member.description ?? "") ||
     deckPlacement !== deriveDeckPlacement(member) ||
@@ -108,7 +116,13 @@ export function MemberProfileModal({
     setName(initialName);
     setNickname(member.nickname ?? "");
     setEmail(member.email ?? "");
-    setPhone(member.phone ?? "");
+    setPhone(
+      member.phone?.startsWith("+91")
+        ? member.phone
+        : member.phone
+          ? "+91" + member.phone.replace(/[^\d]/g, "")
+          : "+91"
+    );
     setBio(member.bio ?? "");
     setDesignation(member.description ?? "");
     setAvatarUrl(member.photoUrl ?? "");
@@ -183,7 +197,7 @@ export function MemberProfileModal({
     formData.set("name", name);
     formData.set("nickname", nickname);
     formData.set("email", email);
-    formData.set("phone", phone);
+    formData.set("phone", phone === "+91" ? "" : phone);
     formData.set("bio", bio);
     formData.set("designation", designation);
     formData.set("deckPlacement", deckPlacement);
@@ -421,8 +435,26 @@ export function MemberProfileModal({
                     <input
                       type="text"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 234 567 890"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        let input = val;
+                        if (!input.startsWith("+91")) {
+                          if (input.startsWith("+9") || input.startsWith("+") || input === "") {
+                            setPhone("+91");
+                            return;
+                          }
+                          const digitsOnly = input.replace(/[^\d]/g, "");
+                          if (digitsOnly.startsWith("91")) {
+                            input = "+" + digitsOnly;
+                          } else {
+                            input = "+91" + digitsOnly;
+                          }
+                        }
+                        const prefix = "+91";
+                        const rest = input.slice(3).replace(/[^\d]/g, "");
+                        setPhone(prefix + rest);
+                      }}
+                      placeholder="+91 98765 43210"
                       className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
                     />
                   </div>
@@ -438,53 +470,33 @@ export function MemberProfileModal({
                     >
                       <option value="lower" className="bg-[#0b0e14]">Lower Lodus</option>
                       <option value="upper" className="bg-[#0b0e14]">Upper Lodus</option>
-                      <option value="none" className="bg-[#0b0e14]">Not shown on homepage</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-                      Auth System Role
-                    </label>
-                    <select
-                      value={authRoleSlug}
-                      onChange={(e) => setAuthRoleSlug(e.target.value)}
-                      className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
-                    >
-                      {allRoles.map((r) => (
-                        <option key={r.slug} value={r.slug} className="bg-[#0b0e14]">
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-                      Roster Display Role
-                    </label>
-                    <select
-                      value={rosterRole}
-                      onChange={(e) => setRosterRole(e.target.value as "member" | "admin" | "owner")}
-                      className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
-                    >
-                      <option value="member" className="bg-[#0b0e14]">Member</option>
-                      <option value="admin" className="bg-[#0b0e14]">Admin</option>
-                      <option value="owner" className="bg-[#0b0e14]">Owner</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant block">
                     Re-upload photo
                   </label>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={(e) => setAvatarFile(e.currentTarget.files?.[0] ?? null)}
-                    className="block w-full text-xs text-on-surface-variant file:mr-3 file:rounded file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary"
-                  />
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="re-upload-avatar-input"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(e) => setAvatarFile(e.currentTarget.files?.[0] ?? null)}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById("re-upload-avatar-input")?.click()}
+                      className="rounded bg-primary/20 hover:bg-primary/30 px-3 py-1.5 text-xs font-semibold text-primary transition-all cursor-pointer"
+                    >
+                      Choose file
+                    </button>
+                    <span className="text-xs text-on-surface-variant">
+                      {avatarFile ? avatarFile.name : "No file chosen"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-1">

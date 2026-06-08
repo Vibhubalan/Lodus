@@ -11,6 +11,7 @@ export function AddRosterMemberForm() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [avatarFileName, setAvatarFileName] = useState("No file chosen");
   const [pending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -29,6 +30,7 @@ export function AddRosterMemberForm() {
       setSuccess(res.message);
       form.reset();
       if (fileRef.current) fileRef.current.value = "";
+      setAvatarFileName("No file chosen");
       router.refresh();
       setTimeout(() => setOpen(false), 1200);
     });
@@ -124,16 +126,30 @@ export function AddRosterMemberForm() {
       </div>
 
       <div className="space-y-1">
-        <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+        <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant block">
           Profile photo
         </label>
-        <input
-          ref={fileRef}
-          name="avatar"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          className="block w-full text-xs text-on-surface-variant file:mr-3 file:rounded file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary"
-        />
+        <div className="flex items-center gap-3">
+          <input
+            ref={fileRef}
+            name="avatar"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            id="add-roster-avatar-input"
+            onChange={(e) => setAvatarFileName(e.target.files?.[0]?.name ?? "No file chosen")}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="rounded bg-primary/20 hover:bg-primary/30 px-3 py-1.5 text-xs font-semibold text-primary transition-all cursor-pointer"
+          >
+            Choose file
+          </button>
+          <span className="text-xs text-on-surface-variant">
+            {avatarFileName}
+          </span>
+        </div>
       </div>
 
       <div className="space-y-1">
@@ -147,7 +163,6 @@ export function AddRosterMemberForm() {
         >
           <option value="lower">Lower Lodus</option>
           <option value="upper">Upper Lodus</option>
-          <option value="none">Not shown on homepage</option>
         </select>
       </div>
 

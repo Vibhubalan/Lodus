@@ -5,6 +5,7 @@ import { MembersDirectory } from "@/components/members/MembersDirectory";
 import { RoleManagementSection } from "@/components/admin/RoleManagementSection";
 import { AuditLogSection } from "@/components/admin/AuditLogSection";
 import { SiteSettingsSection } from "@/components/admin/SiteSettingsSection";
+import { MarketplaceModerationSection } from "@/components/admin/MarketplaceModerationSection";
 import { PublicHome } from "@/components/home/PublicHome";
 import { AdminNav } from "@/components/layout/AdminNav";
 import { MemberHubTabAnimator } from "@/components/layout/MemberHubTabAnimator";
@@ -36,8 +37,14 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { db } from "@/lib/db";
-import { roles } from "@/lib/db/schema";
-import { asc } from "drizzle-orm";
+import {
+  roles,
+  users,
+  marketplaceListings,
+  marketplaceCategories,
+  marketplaceImages,
+} from "@/lib/db/schema";
+import { asc, desc, eq } from "drizzle-orm";
 
 export const revalidate = 0;
 
@@ -69,6 +76,42 @@ export default async function HomePage({
   const aboutMarkdown = site?.aboutMarkdown ?? "";
   const highlightsJson = site?.highlightsJson ?? "[]";
 
+  const recentListingsRaw = await db
+    .select({
+      id: marketplaceListings.id,
+      title: marketplaceListings.title,
+      price: marketplaceListings.price,
+      categoryName: marketplaceCategories.name,
+      sellerName: users.name,
+      sellerEmail: users.email,
+      sellerAvatar: users.avatarUrl,
+    })
+    .from(marketplaceListings)
+    .innerJoin(marketplaceCategories, eq(marketplaceCategories.id, marketplaceListings.categoryId))
+    .innerJoin(users, eq(users.id, marketplaceListings.sellerId))
+    .orderBy(desc(marketplaceListings.createdAt))
+    .limit(3);
+
+  const recentListings = await Promise.all(
+    recentListingsRaw.map(async (listing) => {
+      const firstImg = await db
+        .select({ url: marketplaceImages.url })
+        .from(marketplaceImages)
+        .where(eq(marketplaceImages.listingId, listing.id))
+        .orderBy(asc(marketplaceImages.sortOrder))
+        .limit(1);
+      return {
+        id: listing.id,
+        title: listing.title,
+        price: listing.price,
+        categoryName: listing.categoryName,
+        sellerName: listing.sellerName ?? listing.sellerEmail.split("@")[0],
+        sellerAvatar: listing.sellerAvatar,
+        imageUrl: firstImg[0]?.url ?? null,
+      };
+    })
+  );
+
   let leadershipPool = fullRoster.filter((m) => m.showInLeadership);
   if (leadershipPool.length === 0) {
     leadershipPool = fullRoster.filter(
@@ -88,7 +131,7 @@ export default async function HomePage({
     const minimalHub = isMinimalAdminHub();
     let activeTab = resolveActiveTab(tab, isAdmin, canApprove && !minimalHub);
     if (minimalHub) {
-      const allowed = isAdmin ? ["home", "members", "site"] : ["home", "members"];
+      const allowed = isAdmin ? ["home", "members", "listings", "site"] : ["home", "members"];
       if (!allowed.includes(activeTab)) {
         activeTab = "home";
       }
@@ -114,6 +157,22 @@ export default async function HomePage({
 
     const allRoles = await db.select().from(roles).orderBy(asc(roles.sortOrder));
 
+    const allListings = await db
+      .select({
+        id: marketplaceListings.id,
+        title: marketplaceListings.title,
+        price: marketplaceListings.price,
+        status: marketplaceListings.status,
+        createdAt: marketplaceListings.createdAt,
+        categoryName: marketplaceCategories.name,
+        sellerName: users.name,
+        sellerEmail: users.email,
+      })
+      .from(marketplaceListings)
+      .innerJoin(marketplaceCategories, eq(marketplaceCategories.id, marketplaceListings.categoryId))
+      .innerJoin(users, eq(users.id, marketplaceListings.sellerId))
+      .orderBy(desc(marketplaceListings.createdAt));
+
     return (
       <SiteBackgroundShell>
         <PresenceHeartbeat />
@@ -138,6 +197,7 @@ export default async function HomePage({
                 homepage={homepage}
                 canEditRoster={canEditRoster}
                 canDeleteMembers={canDelete}
+                recentListings={recentListings}
               />
             }
             panels={{
@@ -147,6 +207,9 @@ export default async function HomePage({
                   ? {
                       site: (
                         <SiteSettingsSection site={site} roster={memberRosterPreview} />
+                      ),
+                      listings: (
+                        <MarketplaceModerationSection listings={allListings} />
                       ),
                     }
                   : {}
@@ -161,6 +224,9 @@ export default async function HomePage({
                           audit: <AuditLogSection />,
                           site: (
                             <SiteSettingsSection site={site} roster={memberRosterPreview} />
+                          ),
+                          listings: (
+                            <MarketplaceModerationSection listings={allListings} />
                           ),
                         }
                       : {}),
@@ -197,6 +263,7 @@ export default async function HomePage({
         aboutMarkdown={aboutMarkdown}
         highlightsJson={highlightsJson}
         homepage={homepage}
+        recentListings={recentListings}
       />
     </SiteBackgroundShell>
   );

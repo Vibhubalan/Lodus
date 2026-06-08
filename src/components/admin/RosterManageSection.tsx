@@ -246,7 +246,6 @@ export function RosterManageSection({
               >
                 <option value="lower">Lower Lodus</option>
                 <option value="upper">Upper Lodus</option>
-                <option value="none">Not shown on homepage</option>
               </select>
             </label>
             <label className="block text-xs text-on-surface-variant">

@@ -23,7 +23,7 @@ function isAdminPortalPath(pathname: string): boolean {
   return pathname === `/admin/${slug}` || pathname === `/admin/${slug}/`;
 }
 
-export default auth((req) => {
+export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const memberAuth = isMemberAuthEnabled();
@@ -59,6 +59,8 @@ export default auth((req) => {
 
   return NextResponse.next();
 });
+
+export default proxy;
 
 export const config = {
   matcher: [

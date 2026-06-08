@@ -217,6 +217,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             !record.user.birthdate?.trim() ||
             !record.user.hasCustomPassword);
       }
+      token.isMainAdmin = isAdminEmail(email);
 
       if (account && user) {
         token.email = email;
@@ -231,6 +232,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.sub) {
         session.user.id = token.sub;
       }
+      session.user.isMainAdmin = token.isMainAdmin as boolean | undefined;
 
       const email = (token.email as string | undefined)?.toLowerCase();
       if (email) {

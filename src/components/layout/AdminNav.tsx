@@ -4,6 +4,7 @@ import { canApproveMembers, isAdminEmail } from "@/lib/auth/staff";
 import { listPendingApplications } from "@/lib/auth/user-service";
 import { isMinimalAdminHub } from "@/lib/features";
 import { MemberProfileMenu } from "./MemberProfileMenu";
+import { MarketplaceCartButton } from "@/components/marketplace/MarketplaceCartButton";
 import { NoCopyGuard } from "./NoCopyGuard";
 
 export async function AdminNav({
@@ -40,12 +41,16 @@ export async function AdminNav({
   const links = minimalHub && isAdmin
     ? [
         { id: "members", href: "/?tab=members", label: "Members" },
+        { id: "marketplace", href: "/marketplace", label: "Marketplace" },
+        { id: "listings", href: "/?tab=listings", label: "Listings Mod" },
         { id: "site", href: "/?tab=site", label: "Site Settings" },
       ]
     : isAdmin
       ? [
           ...(approvalsLink ? [approvalsLink] : []),
           { id: "members", href: "/?tab=members", label: "Members" },
+          { id: "marketplace", href: "/marketplace", label: "Marketplace" },
+          { id: "listings", href: "/?tab=listings", label: "Listings Mod" },
           { id: "roles", href: "/?tab=roles", label: "Role Management" },
           { id: "audit", href: "/?tab=audit", label: "Audit Logs" },
           { id: "site", href: "/?tab=site", label: "Site Settings" },
@@ -54,6 +59,7 @@ export async function AdminNav({
           ...(approvalsLink ? [approvalsLink] : []),
           { id: "social", href: "/?tab=social", label: "Social" },
           { id: "members", href: "/?tab=members", label: "Members" },
+          { id: "marketplace", href: "/marketplace", label: "Marketplace" },
           { id: "broadcast", href: "/?tab=broadcast", label: "Broadcast" },
           { id: "leaderboard", href: "/?tab=leaderboard", label: "Leaderboard" },
         ];
@@ -89,7 +95,10 @@ export async function AdminNav({
             ))}
           </nav>
 
-          <MemberProfileMenu session={session} />
+          <div className="flex items-center gap-3">
+            <MarketplaceCartButton />
+            <MemberProfileMenu session={session} />
+          </div>
         </div>
       </header>
     </NoCopyGuard>

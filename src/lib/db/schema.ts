@@ -220,6 +220,88 @@ export const discordVoiceSnapshot = pgTable("discord_voice_snapshot", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const marketplaceCategories = pgTable("marketplace_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+});
+
+export const marketplaceListings = pgTable("marketplace_listings", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  price: integer("price").notNull(),
+  categoryId: integer("category_id")
+    .notNull()
+    .references(() => marketplaceCategories.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: text("status", { enum: ["active", "sold", "inactive"] })
+    .notNull()
+    .default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const marketplaceImages = pgTable("marketplace_images", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listing_id")
+    .notNull()
+    .references(() => marketplaceListings.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const marketplaceWishlist = pgTable(
+  "marketplace_wishlist",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listingId: integer("listing_id")
+      .notNull()
+      .references(() => marketplaceListings.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("marketplace_wishlist_user_listing_idx").on(table.userId, table.listingId),
+  ],
+);
+
+export const marketplaceCartItems = pgTable(
+  "marketplace_cart_items",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listingId: integer("listing_id")
+      .notNull()
+      .references(() => marketplaceListings.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("marketplace_cart_user_listing_idx").on(table.userId, table.listingId),
+  ],
+);
+
+export const marketplaceReviews = pgTable("marketplace_reviews", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  reviewerId: integer("reviewer_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Role = typeof roles.$inferSelect;
 export type AuthToken = typeof authTokens.$inferSelect;
@@ -231,3 +313,9 @@ export type SiteContent = typeof siteContent.$inferSelect;
 export type SocialPost = typeof socialPosts.$inferSelect;
 export type DailyPlan = typeof dailyPlans.$inferSelect;
 export type DailyPlanAcceptance = typeof dailyPlanAcceptances.$inferSelect;
+export type MarketplaceCategory = typeof marketplaceCategories.$inferSelect;
+export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
+export type MarketplaceImage = typeof marketplaceImages.$inferSelect;
+export type MarketplaceWishlist = typeof marketplaceWishlist.$inferSelect;
+export type MarketplaceCartItem = typeof marketplaceCartItems.$inferSelect;
+export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;

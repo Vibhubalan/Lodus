@@ -8,6 +8,13 @@
       "when": 1780063077931,
       "tag": "0000_left_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780509551299,
+      "tag": "0001_slippery_mentor",
+      "breakpoints": true
     }
   ]
 }
