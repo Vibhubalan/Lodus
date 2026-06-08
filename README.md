@@ -10,7 +10,7 @@ npm run db:setup
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [lodus.in](https://lodus-one.vercel.app/).
 
 ## Member login (dev)
 
